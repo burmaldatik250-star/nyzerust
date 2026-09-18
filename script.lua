@@ -1,7 +1,7 @@
 --[[
-    NyzeRust v3.4 — "Pure Black" Edition + FPS Booster
+    NyzeRust v3.5 — "Pure Black" Edition + FPS Booster + Third Person
     Pure Black UI • Watermark Capsule • Flat List
-    X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot • Оптимизация
+    X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot • Оптимизация • 3-е лицо
 --]]
 
 -- ============================================================
@@ -66,6 +66,9 @@ local State = {
     OreEspMaxDist = 400, NpcEspMaxDist = 600, CrateEspMaxDist = 500,
     XRay = false,
     LockAutoCode = false,
+    -- Third Person
+    ThirdPerson      = false,
+    ThirdPersonDist  = 15,
     -- Оптимизация
     OptLowGFX      = false,
     OptNoEffects   = false,
@@ -253,7 +256,7 @@ new("TextLabel", {
 new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
     Position = UDim2.new(0, 72, 0, 34),
-    BackgroundTransparency = 1, Text = "Pure Black • v3.4  •  RSHIFT",
+    BackgroundTransparency = 1, Text = "Pure Black • v3.5  •  RSHIFT",
     TextColor3 = Colors.SubText, Font = Enum.Font.Code,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
@@ -482,6 +485,10 @@ createToggle("Бесконечный прыжок", "InfJump",        nextO())
 createToggle("Свободная камера",   "FreecamEnabled", nextO())
 createSlider("Скорость полёта",    "FreecamSpeed",   0.1, 10, nextO())
 
+createCategory("КАМЕРА", nextO())
+createToggle("Третье лицо",        "ThirdPerson",     nextO())
+createSlider("Дистанция камеры",   "ThirdPersonDist", 3, 50, nextO())
+
 createCategory("ВИЗУАЛ", nextO())
 createToggle("X-Ray",              "XRay",       nextO())
 createToggle("Полное освещение",   "FullBright", nextO())
@@ -557,7 +564,7 @@ if isMobile then
 end
 
 -- ============================================================
---  WATERMARK (капсула сверху — БЕЗ RichText)
+--  WATERMARK
 -- ============================================================
 local WM = Instance.new("ScreenGui")
 WM.Name = "NyzeRustWM"
@@ -606,8 +613,8 @@ end
 
 local segFpsVal  = makeSeg("0", Colors.Accent, 5)
 local segPingVal = makeSeg("0ms", Colors.Accent, 8)
-local _ = makeSeg("NyzeRust", Colors.Accent, 1)
-makeSeg("v3.4", Colors.SubText, 2)
+makeSeg("NyzeRust", Colors.Accent, 1)
+makeSeg("v3.5", Colors.SubText, 2)
 makeSeg("|", Colors.Stroke, 3)
 makeSeg("FPS:", Colors.SubText, 4)
 makeSeg("|", Colors.Stroke, 6)
@@ -628,6 +635,41 @@ RunService.RenderStepped:Connect(function()
         segFpsVal.Text  = tostring(fps)
         segPingVal.Text = ping .. "ms"
     end)
+end)
+
+-- ============================================================
+--  THIRD PERSON CAMERA
+-- ============================================================
+local thirdPersonActive = false
+
+local function applyThirdPerson()
+    if State.ThirdPerson and not thirdPersonActive then
+        thirdPersonActive = true
+        LocalPlayer.CameraMode = Enum.CameraMode.Classic
+        pcall(function()
+            LocalPlayer.CameraMaxZoomDistance = State.ThirdPersonDist
+            LocalPlayer.CameraMinZoomDistance = State.ThirdPersonDist
+        end)
+    elseif not State.ThirdPerson and thirdPersonActive then
+        thirdPersonActive = false
+        pcall(function()
+            LocalPlayer.CameraMaxZoomDistance = 128
+            LocalPlayer.CameraMinZoomDistance = 0.5
+        end)
+    elseif State.ThirdPerson and thirdPersonActive then
+        -- Обновление дистанции в реальном времени
+        pcall(function()
+            LocalPlayer.CameraMaxZoomDistance = State.ThirdPersonDist
+            LocalPlayer.CameraMinZoomDistance = State.ThirdPersonDist
+        end)
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(0.2)
+        pcall(applyThirdPerson)
+    end
 end)
 
 -- ============================================================
@@ -1472,30 +1514,4 @@ end
 -- ============================================================
 --  INFINITE JUMP
 -- ============================================================
-UserInputService.JumpRequest:Connect(function()
-    if State.InfJump and LocalPlayer.Character then
-        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
-    end
-end)
-
--- ============================================================
---  HOTKEY
--- ============================================================
-UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
-end)
-
--- ============================================================
---  NOTIFICATION
--- ============================================================
-pcall(function()
-    StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.4",
-        Text = "Pure Black + FPS Booster • RSHIFT",
-        Duration = 4
-    })
-end)
-
-print("[NyzeRust v3.4] Загружен. RSHIFT для открытия.")
+UserInputService.Jump
