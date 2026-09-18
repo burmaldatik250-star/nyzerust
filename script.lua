@@ -1514,4 +1514,30 @@ end
 -- ============================================================
 --  INFINITE JUMP
 -- ============================================================
-UserInputService.Jump
+UserInputService.JumpRequest:Connect(function()
+    if State.InfJump and LocalPlayer.Character then
+        local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+-- ============================================================
+--  HOTKEY
+-- ============================================================
+UserInputService.InputBegan:Connect(function(input, processed)
+    if processed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
+end)
+
+-- ============================================================
+--  NOTIFICATION
+-- ============================================================
+pcall(function()
+    StarterGui:SetCore("SendNotification", {
+        Title = "NyzeRust v3.5",
+        Text = "Pure Black + FPS + 3rd Person • RSHIFT",
+        Duration = 4
+    })
+end)
+
+print("[NyzeRust v3.5] Загружен. RSHIFT для открытия.")
