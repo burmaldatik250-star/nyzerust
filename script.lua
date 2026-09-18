@@ -1,7 +1,7 @@
 --[[
-    NyzeRust v3.5 — "Pure Black" Edition + FPS Booster + Third Person
-    Pure Black UI • Watermark Capsule • Flat List
-    X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot • Оптимизация • 3-е лицо
+    NyzeRust v3.6 — "Pure Black" Edition
+    Pure Black UI • Wall X-Ray • 3rd Person • FPS Booster
+    ESP + INV + Icons • Aimbot + Auto-Shoot • Lock Auto-Code
 --]]
 
 -- ============================================================
@@ -66,10 +66,8 @@ local State = {
     OreEspMaxDist = 400, NpcEspMaxDist = 600, CrateEspMaxDist = 500,
     XRay = false,
     LockAutoCode = false,
-    -- Third Person
     ThirdPerson      = false,
     ThirdPersonDist  = 15,
-    -- Оптимизация
     OptLowGFX      = false,
     OptNoEffects   = false,
     OptNoParticles = false,
@@ -256,7 +254,7 @@ new("TextLabel", {
 new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
     Position = UDim2.new(0, 72, 0, 34),
-    BackgroundTransparency = 1, Text = "Pure Black • v3.5  •  RSHIFT",
+    BackgroundTransparency = 1, Text = "Pure Black • v3.6  •  RSHIFT",
     TextColor3 = Colors.SubText, Font = Enum.Font.Code,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
@@ -490,7 +488,7 @@ createToggle("Третье лицо",        "ThirdPerson",     nextO())
 createSlider("Дистанция камеры",   "ThirdPersonDist", 3, 50, nextO())
 
 createCategory("ВИЗУАЛ", nextO())
-createToggle("X-Ray",              "XRay",       nextO())
+createToggle("X-Ray стен",         "XRay",       nextO())
 createToggle("Полное освещение",   "FullBright", nextO())
 
 createCategory("МИР", nextO())
@@ -614,7 +612,7 @@ end
 local segFpsVal  = makeSeg("0", Colors.Accent, 5)
 local segPingVal = makeSeg("0ms", Colors.Accent, 8)
 makeSeg("NyzeRust", Colors.Accent, 1)
-makeSeg("v3.5", Colors.SubText, 2)
+makeSeg("v3.6", Colors.SubText, 2)
 makeSeg("|", Colors.Stroke, 3)
 makeSeg("FPS:", Colors.SubText, 4)
 makeSeg("|", Colors.Stroke, 6)
@@ -657,7 +655,6 @@ local function applyThirdPerson()
             LocalPlayer.CameraMinZoomDistance = 0.5
         end)
     elseif State.ThirdPerson and thirdPersonActive then
-        -- Обновление дистанции в реальном времени
         pcall(function()
             LocalPlayer.CameraMaxZoomDistance = State.ThirdPersonDist
             LocalPlayer.CameraMinZoomDistance = State.ThirdPersonDist
@@ -697,40 +694,77 @@ local function isVisible(targetPart, targetChar)
 end
 
 -- ============================================================
---  X-RAY
+--  X-RAY WALLS (прозрачные стены — видно игроков сквозь них)
 -- ============================================================
-local xrayOriginals = {}
+local xrayWallOriginals = {}
+local xrayApplied = false
 
-local function applyXRay()
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character then
-            for _, part in ipairs(p.Character:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    if not xrayOriginals[part] then
-                        xrayOriginals[part] = {
-                            transparency = part.Transparency,
-                            ltm = part.LocalTransparencyModifier
+local function isCharacterPart(part)
+    local parent = part.Parent
+    local grandparent = parent and parent.Parent
+    if parent and parent:IsA("Model") and parent:FindFirstChildOfClass("Humanoid") then
+        return true
+    end
+    if grandparent and grandparent:IsA("Model") and grandparent:FindFirstChildOfClass("Humanoid") then
+        return true
+    end
+    return false
+end
+
+local function applyXRayWalls()
+    if State.XRay and not xrayApplied then
+        xrayApplied = true
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            if obj:IsA("BasePart") and not isCharacterPart(obj) then
+                xrayWallOriginals[obj] = {
+                    transparency = obj.Transparency,
+                    ltm = obj.LocalTransparencyModifier
+                }
+                obj.LocalTransparencyModifier = 0.85
+            elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                local part = obj.Parent
+                if part and not (part:IsA("BasePart") and isCharacterPart(part)) then
+                    xrayWallOriginals[obj] = {transparency = obj.Transparency}
+                    obj.Transparency = 0.85
+                end
+            end
+        end
+    elseif not State.XRay and xrayApplied then
+        xrayApplied = false
+        for obj, orig in pairs(xrayWallOriginals) do
+            pcall(function()
+                if obj and obj.Parent then
+                    if obj:IsA("BasePart") then
+                        obj.LocalTransparencyModifier = orig.ltm
+                    elseif obj:IsA("Decal") or obj:IsA("Texture") then
+                        obj.Transparency = orig.transparency
+                    end
+                end
+            end)
+        end
+        xrayWallOriginals = {}
+    end
+end
+
+-- Цикл обновления X-Ray (если карта подгружается — новые стены тоже становятся прозрачными)
+task.spawn(function()
+    while true do
+        task.wait(3)
+        if State.XRay then
+            for _, obj in ipairs(workspace:GetDescendants()) do
+                if obj:IsA("BasePart") and not isCharacterPart(obj) then
+                    if xrayWallOriginals[obj] == nil then
+                        xrayWallOriginals[obj] = {
+                            transparency = obj.Transparency,
+                            ltm = obj.LocalTransparencyModifier
                         }
+                        pcall(function() obj.LocalTransparencyModifier = 0.85 end)
                     end
-                    if State.XRay then
-                        part.LocalTransparencyModifier = 0.85
-                    else
-                        local orig = xrayOriginals[part]
-                        if orig then
-                            part.LocalTransparencyModifier = orig.ltm
-                        end
-                    end
-                elseif part:IsA("Decal") or part:IsA("Texture") then
-                    if not xrayOriginals[part] then
-                        xrayOriginals[part] = {transparency = part.Transparency}
-                    end
-                    part.Transparency = State.XRay and 0.85
-                        or (xrayOriginals[part] and xrayOriginals[part].transparency or 0)
                 end
             end
         end
     end
-end
+end)
 
 -- ============================================================
 --  LOCK AUTO-CODE
@@ -921,12 +955,7 @@ end
 --  ЛОГИКА ОПТИМИЗАЦИИ
 -- ============================================================
 local OptBackup = {
-    effects = {},
-    particles = {},
-    decals = {},
-    shadows = {},
-    parts = {},
-    sounds = {},
+    effects = {}, particles = {}, decals = {}, shadows = {}, parts = {}, sounds = {},
 }
 
 local function optRestoreAll()
@@ -948,12 +977,8 @@ local function optRestoreAll()
     for sd, v in pairs(OptBackup.sounds) do
         pcall(function() if sd and sd.Parent then sd.Volume = v end end)
     end
-    OptBackup.effects = {}
-    OptBackup.particles = {}
-    OptBackup.decals = {}
-    OptBackup.shadows = {}
-    OptBackup.parts = {}
-    OptBackup.sounds = {}
+    OptBackup.effects = {}; OptBackup.particles = {}; OptBackup.decals = {}
+    OptBackup.shadows = {}; OptBackup.parts = {}; OptBackup.sounds = {}
 end
 
 local function optApplyEffects()
@@ -1008,7 +1033,6 @@ local function optApplyFarParts()
     local char = LocalPlayer.Character
     local root = char and char:FindFirstChild("HumanoidRootPart")
     if not root then return end
-
     local maxDist = State.OptRenderDist
     for _, obj in ipairs(workspace:GetDescendants()) do
         if obj:IsA("BasePart") and obj.Transparency < 1 then
@@ -1027,10 +1051,8 @@ end
 local function optApplyTerrain()
     pcall(function()
         local t = workspace.Terrain
-        t.WaterWaveSize = 0
-        t.WaterWaveSpeed = 0
-        t.WaterReflectance = 0
-        t.WaterTransparency = 1
+        t.WaterWaveSize = 0; t.WaterWaveSpeed = 0
+        t.WaterReflectance = 0; t.WaterTransparency = 1
         t.Decoration = false
     end)
 end
@@ -1051,10 +1073,7 @@ local function applyOptimizations()
               or State.OptNoDecals or State.OptNoShadows or State.OptFarParts
               or State.OptLowTerrain or State.OptNoSounds
 
-    if not anyOn then
-        optRestoreAll()
-        return
-    end
+    if not anyOn then optRestoreAll(); return end
 
     if State.OptNoEffects or State.OptLowGFX then optApplyEffects() end
     if State.OptNoParticles or State.OptLowGFX then optApplyParticles() end
@@ -1091,7 +1110,7 @@ end)
 RunService.RenderStepped:Connect(function()
     pcall(function()
         updateNpcEsp()
-        applyXRay()
+        applyXRayWalls()
         runLockAutoCode()
 
         if State.LegitSpeed then
@@ -1112,8 +1131,7 @@ RunService.RenderStepped:Connect(function()
                 local col = (ore.Name == "sulfur" and Color3.new(1, 1, 0))
                          or (ore.Name == "iron" and Color3.fromRGB(180, 180, 180))
                          or Color3.fromRGB(220, 220, 220)
-                if en then
-                    applyOreVisuals(ore, ore.Name, col)
+                if en then applyOreVisuals(ore, ore.Name, col)
                 elseif ore:FindFirstChild("OreTag") then
                     ore.OreTag.Enabled, ore.OreHighlight.Enabled = false, false
                 end
@@ -1129,8 +1147,7 @@ RunService.RenderStepped:Connect(function()
                 elseif crate.Name == "EliteCrate" then en = State.CrateEsp; col = Color3.fromRGB(255, 60, 90)
                 elseif crate.Name == "FoodBox" or crate.Name == "ToolBox" then en = State.CrateEsp; col = Color3.fromRGB(0, 200, 255)
                 end
-                if en then
-                    applyCrateVisuals(crate, crate.Name, col)
+                if en then applyCrateVisuals(crate, crate.Name, col)
                 elseif crate:FindFirstChild("CrateTag") then
                     crate.CrateTag.Enabled, crate.CrateHighlight.Enabled = false, false
                 end
@@ -1212,9 +1229,7 @@ local function getItemIcon(itemName)
             for _, root in ipairs(searchRoots) do
                 for _, obj in ipairs(root:GetDescendants()) do
                     if obj:IsA("Tool") and obj.Name == itemName then
-                        if obj.TextureId and obj.TextureId ~= "" then
-                            return obj.TextureId
-                        end
+                        if obj.TextureId and obj.TextureId ~= "" then return obj.TextureId end
                         for _, d in ipairs(obj:GetDescendants()) do
                             if d:IsA("Decal") or d:IsA("Texture") then return d.Texture end
                             if d:IsA("ImageLabel") and d.Image ~= "" then return d.Image end
@@ -1224,11 +1239,8 @@ local function getItemIcon(itemName)
             end
             return nil
         end)
-        if ok and icon and icon ~= "" then
-            IconCache[itemName] = icon
-        else
-            IconCache[itemName] = false
-        end
+        if ok and icon and icon ~= "" then IconCache[itemName] = icon
+        else IconCache[itemName] = false end
         IconLoading[itemName] = nil
     end)
     return nil
@@ -1534,10 +1546,10 @@ end)
 -- ============================================================
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.5",
-        Text = "Pure Black + FPS + 3rd Person • RSHIFT",
+        Title = "NyzeRust v3.6",
+        Text = "Pure Black • Wall X-Ray • RSHIFT",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v3.5] Загружен. RSHIFT для открытия.")
+print("[NyzeRust v3.6] Загружен. RSHIFT для открытия.")
