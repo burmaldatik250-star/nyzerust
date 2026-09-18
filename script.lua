@@ -1,12 +1,6 @@
 --[[
-    ███╗   ██╗██╗   ██╗███████╗███████╗██████╗ ██╗   ██╗███████╗████████╗
-    ████╗  ██║╚██╗ ██╔╝╚══███╔╝██╔════╝██╔══██╗██║   ██║██╔════╝╚══██╔══╝
-    ██╔██╗ ██║ ╚████╔╝   ███╔╝ █████╗  ██████╔╝██║   ██║███████╗   ██║   
-    ██║╚██╗██║  ╚██╔╝   ███╔╝  ██╔══╝  ██╔══██╗██║   ██║╚════██║   ██║   
-    ██║ ╚████║   ██║   ███████╗███████╗██║  ██║╚██████╔╝███████║   ██║   
-    ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   
-                 NyzeRust v2.0 — "Netherite" Edition
-                 Minecraft-Style UI • INV+HP ESP • RU/EN
+    NyzeRust v3.0 — "Void" Edition
+    Ultra Dark • Item Icons in ESP • Auto-Shoot
 --]]
 
 -- ============================================================
@@ -20,13 +14,15 @@ local TweenService     = game:GetService("TweenService")
 local CoreGui          = game:GetService("CoreGui")
 local Stats            = game:GetService("Stats")
 local StarterGui       = game:GetService("StarterGui")
+local VirtualUser      = game:GetService("VirtualUser")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera
 local isMobile    = UserInputService.TouchEnabled
 
 -- ============================================================
---  ПРОВЕРКА DRAWING
+--  DRAWING CHECK
 -- ============================================================
 local hasDrawing = pcall(function()
     local t = Drawing.new("Line"); t:Remove(); return true
@@ -35,248 +31,112 @@ end)
 -- ============================================================
 --  ЛОКАЛИЗАЦИЯ
 -- ============================================================
-local LANG = "RU" -- "RU" или "EN"
-
+local LANG = "RU"
 local Loc = {
     RU = {
-        title = "NyzeRust",
-        subtitle = "Незерит • v2.0",
+        title = "NyzeRust", subtitle = "Void • v3.0",
         menu_hint = "МЕНЮ: RSHIFT",
-        online = "ОНЛАЙН",
-        fps = "FPS",
-        ping = "ПИНГ",
-        binds = "АКТИВНЫЕ БИНДЫ",
-        no_binds = "нет биндов",
-        bind_hint = "нажми [—] → задай клавишу",
-        -- вкладки
-        tab_visuals   = "ВИЗУАЛ",
-        tab_aim       = "АИМ",
-        tab_player    = "ИГРОК",
-        tab_world     = "МИР",
-        tab_settings  = "НАСТР",
-        -- категории
-        cat_esp       = "ESP ИГРОКОВ",
-        cat_chams     = "ПОДСВЕТКА",
-        cat_aim       = "АИМБОТ",
-        cat_misc      = "РАЗНОЕ",
-        cat_world     = "МИР",
-        cat_theme     = "ТЕМА",
-        -- ESP
-        esp_boxes     = "Рамки игроков",
-        esp_names     = "Ники",
-        esp_dist      = "Дистанция",
-        esp_hp        = "Полоса здоровья",
-        esp_hpnum     = "Число HP",
-        esp_inv       = "Инвентарь",
-        esp_tracers   = "Трассеры",
-        esp_skeleton  = "Скелет",
-        esp_head      = "Кружок на голове",
-        esp_maxdist   = "Макс. дистанция",
-        -- Aim
-        aim_enabled   = "Включить Аимбот",
-        aim_team      = "Проверка команды",
-        aim_wall      = "Проверка стен",
-        aim_smooth    = "Плавность",
-        aim_fov       = "Радиус FOV",
-        aim_visible   = "Только видимые",
-        aim_key       = "Клавиша аима",
-        aim_nodrop    = "Отключить падение пуль",
-        -- Player
-        ply_speed     = "Скорость",
-        ply_speedpow  = "Множитель скорости",
-        ply_infjump   = "Бесконечный прыжок",
-        ply_freecam   = "Свободная камера",
-        ply_flyspeed  = "Скорость полёта",
-        -- World
-        wld_fullbr    = "Полное освещение",
-        wld_sulfur    = "Сера",
-        wld_iron      = "Железо",
-        wld_stone     = "Камень",
-        wld_npc       = "NPC",
-        wld_crates    = "Ящики",
-        wld_ore_dist  = "Дистанция руды",
-        wld_npc_dist  = "Дистанция NPC",
-        wld_crate_dist= "Дистанция ящиков",
-        -- Settings
-        set_theme     = "Тема",
-        set_lang      = "Язык",
-        set_reset     = "Сброс настроек",
-        -- themes
-        theme_netherite = "Незерит",
-        theme_redstone  = "Редстоун",
-        theme_diamond   = "Алмаз",
-        theme_emerald   = "Изумруд",
+        online = "ОНЛАЙН", fps = "FPS", ping = "ПИНГ",
+        binds = "БИНДЫ", no_binds = "нет биндов",
+        tab_visuals = "ВИЗУАЛ", tab_aim = "АИМ", tab_player = "ИГРОК",
+        tab_world = "МИР", tab_settings = "НАСТР",
+        cat_esp = "ESP ИГРОКОВ", cat_aim = "АИМБОТ", cat_misc = "РАЗНОЕ",
+        cat_world = "МИР", cat_settings = "НАСТРОЙКИ",
+        esp_boxes = "Рамки игроков", esp_names = "Ники", esp_dist = "Дистанция",
+        esp_hp = "Полоса здоровья", esp_hpnum = "Число HP", esp_inv = "Инвентарь",
+        esp_inv_icons = "Иконки предметов",
+        esp_tracers = "Трассеры", esp_skeleton = "Скелет", esp_head = "Кружок головы",
+        esp_maxdist = "Макс. дистанция",
+        aim_enabled = "Включить Аимбот", aim_team = "Проверка команды",
+        aim_wall = "Проверка стен", aim_smooth = "Плавность",
+        aim_fov = "Радиус FOV", aim_nodrop = "Отключить падение пуль",
+        autoshoot = "Авто-выстрел",
+        autoshoot_key = "Кнопка стрельбы",
+        autoshoot_delay = "Задержка выстрела",
+        ply_speed = "Скорость", ply_speedpow = "Множитель скорости",
+        ply_infjump = "Бесконечный прыжок",
+        ply_freecam = "Свободная камера", ply_flyspeed = "Скорость полёта",
+        wld_fullbr = "Полное освещение",
+        wld_sulfur = "Сера", wld_iron = "Железо", wld_stone = "Камень",
+        wld_npc = "NPC", wld_crates = "Ящики",
+        wld_ore_dist = "Дистанция руды", wld_npc_dist = "Дистанция NPC",
+        wld_crate_dist = "Дистанция ящиков",
+        set_lang = "Язык", set_reset = "Сброс настроек",
+        autoshoot_btn_hint = "ПКМ / Пробел",
     },
     EN = {
-        title = "NyzeRust",
-        subtitle = "Netherite • v2.0",
+        title = "NyzeRust", subtitle = "Void • v3.0",
         menu_hint = "MENU: RSHIFT",
-        online = "ONLINE",
-        fps = "FPS",
-        ping = "PING",
-        binds = "ACTIVE BINDS",
-        no_binds = "no binds",
-        bind_hint = "click [—] → press key",
-        tab_visuals   = "VISUALS",
-        tab_aim       = "AIM",
-        tab_player    = "PLAYER",
-        tab_world     = "WORLD",
-        tab_settings  = "SETTINGS",
-        cat_esp       = "PLAYER ESP",
-        cat_chams     = "HIGHLIGHT",
-        cat_aim       = "AIMBOT",
-        cat_misc      = "MISC",
-        cat_world     = "WORLD",
-        cat_theme     = "THEME",
-        esp_boxes     = "Player Boxes",
-        esp_names     = "Name Tags",
-        esp_dist      = "Distance",
-        esp_hp        = "Health Bar",
-        esp_hpnum     = "HP Number",
-        esp_inv       = "Inventory",
-        esp_tracers   = "Tracers",
-        esp_skeleton  = "Skeleton",
-        esp_head      = "Head Circle",
-        esp_maxdist   = "Max Distance",
-        aim_enabled   = "Enable Aimbot",
-        aim_team      = "Team Check",
-        aim_wall      = "Wall Check",
-        aim_smooth    = "Smoothing",
-        aim_fov       = "FOV Radius",
-        aim_visible   = "Visible Only",
-        aim_key       = "Aim Key",
-        aim_nodrop    = "No Bullet Drop",
-        ply_speed     = "Legit Speed",
-        ply_speedpow  = "Speed Multiplier",
-        ply_infjump   = "Infinite Jump",
-        ply_freecam   = "Freecam",
-        ply_flyspeed  = "Fly Speed",
-        wld_fullbr    = "Full Bright",
-        wld_sulfur    = "Sulfur Ore",
-        wld_iron      = "Iron Ore",
-        wld_stone     = "Stone Ore",
-        wld_npc       = "NPC",
-        wld_crates    = "Crates",
-        wld_ore_dist  = "Ore Distance",
-        wld_npc_dist  = "NPC Distance",
-        wld_crate_dist= "Crate Distance",
-        set_theme     = "Theme",
-        set_lang      = "Language",
-        set_reset     = "Reset Settings",
-        theme_netherite = "Netherite",
-        theme_redstone  = "Redstone",
-        theme_diamond   = "Diamond",
-        theme_emerald   = "Emerald",
+        online = "ONLINE", fps = "FPS", ping = "PING",
+        binds = "BINDS", no_binds = "no binds",
+        tab_visuals = "VISUALS", tab_aim = "AIM", tab_player = "PLAYER",
+        tab_world = "WORLD", tab_settings = "SETTINGS",
+        cat_esp = "PLAYER ESP", cat_aim = "AIMBOT", cat_misc = "MISC",
+        cat_world = "WORLD", cat_settings = "SETTINGS",
+        esp_boxes = "Player Boxes", esp_names = "Name Tags", esp_dist = "Distance",
+        esp_hp = "Health Bar", esp_hpnum = "HP Number", esp_inv = "Inventory",
+        esp_inv_icons = "Item Icons",
+        esp_tracers = "Tracers", esp_skeleton = "Skeleton", esp_head = "Head Circle",
+        esp_maxdist = "Max Distance",
+        aim_enabled = "Enable Aimbot", aim_team = "Team Check",
+        aim_wall = "Wall Check", aim_smooth = "Smoothing",
+        aim_fov = "FOV Radius", aim_nodrop = "No Bullet Drop",
+        autoshoot = "Auto-Shoot",
+        autoshoot_key = "Fire Key",
+        autoshoot_delay = "Shoot Delay",
+        ply_speed = "Legit Speed", ply_speedpow = "Speed Multiplier",
+        ply_infjump = "Infinite Jump",
+        ply_freecam = "Freecam", ply_flyspeed = "Fly Speed",
+        wld_fullbr = "Full Bright",
+        wld_sulfur = "Sulfur", wld_iron = "Iron", wld_stone = "Stone",
+        wld_npc = "NPC", wld_crates = "Crates",
+        wld_ore_dist = "Ore Distance", wld_npc_dist = "NPC Distance",
+        wld_crate_dist = "Crate Distance",
+        set_lang = "Language", set_reset = "Reset Settings",
+        autoshoot_btn_hint = "RMB / Space",
     }
 }
-
 local function t(key)
     local l = Loc[LANG] or Loc.RU
     return l[key] or key
 end
 
 -- ============================================================
---  ТЕМЫ MINECRAFT
+--  ЕДИНАЯ ТЁМНАЯ ТЕМА (Void)
 -- ============================================================
-local Themes = {
-    Netherite = {
-        Main        = Color3.fromRGB(120, 80, 200),   -- незеритовый фиолет
-        Secondary   = Color3.fromRGB(80, 50, 140),
-        Accent      = Color3.fromRGB(200, 160, 255),
-        Background  = Color3.fromRGB(18, 15, 24),
-        Panel       = Color3.fromRGB(26, 22, 34),
-        SidePanel   = Color3.fromRGB(22, 18, 30),
-        Element     = Color3.fromRGB(38, 32, 50),
-        ElementHover= Color3.fromRGB(52, 44, 68),
-        Text        = Color3.fromRGB(240, 235, 250),
-        SubText     = Color3.fromRGB(150, 140, 175),
-        Stroke      = Color3.fromRGB(60, 50, 85),
-        Success     = Color3.fromRGB(120, 220, 120),
-        Danger      = Color3.fromRGB(230, 80, 80)
-    },
-    Redstone = {
-        Main        = Color3.fromRGB(255, 60, 60),
-        Secondary   = Color3.fromRGB(160, 30, 30),
-        Accent      = Color3.fromRGB(255, 140, 100),
-        Background  = Color3.fromRGB(20, 12, 12),
-        Panel       = Color3.fromRGB(30, 18, 18),
-        SidePanel   = Color3.fromRGB(24, 14, 14),
-        Element     = Color3.fromRGB(44, 26, 26),
-        ElementHover= Color3.fromRGB(60, 36, 36),
-        Text        = Color3.fromRGB(255, 235, 230),
-        SubText     = Color3.fromRGB(180, 140, 140),
-        Stroke      = Color3.fromRGB(80, 40, 40),
-        Success     = Color3.fromRGB(120, 220, 120),
-        Danger      = Color3.fromRGB(255, 80, 80)
-    },
-    Diamond = {
-        Main        = Color3.fromRGB(80, 220, 230),
-        Secondary   = Color3.fromRGB(40, 150, 170),
-        Accent      = Color3.fromRGB(180, 250, 255),
-        Background  = Color3.fromRGB(12, 20, 24),
-        Panel       = Color3.fromRGB(18, 30, 34),
-        SidePanel   = Color3.fromRGB(14, 24, 28),
-        Element     = Color3.fromRGB(26, 44, 50),
-        ElementHover= Color3.fromRGB(38, 60, 68),
-        Text        = Color3.fromRGB(230, 250, 255),
-        SubText     = Color3.fromRGB(140, 180, 190),
-        Stroke      = Color3.fromRGB(40, 70, 80),
-        Success     = Color3.fromRGB(120, 220, 120),
-        Danger      = Color3.fromRGB(230, 80, 80)
-    },
-    Emerald = {
-        Main        = Color3.fromRGB(80, 220, 120),
-        Secondary   = Color3.fromRGB(40, 150, 80),
-        Accent      = Color3.fromRGB(180, 255, 200),
-        Background  = Color3.fromRGB(12, 22, 16),
-        Panel       = Color3.fromRGB(18, 32, 22),
-        SidePanel   = Color3.fromRGB(14, 26, 18),
-        Element     = Color3.fromRGB(26, 48, 34),
-        ElementHover= Color3.fromRGB(38, 66, 46),
-        Text        = Color3.fromRGB(230, 255, 235),
-        SubText     = Color3.fromRGB(140, 190, 155),
-        Stroke      = Color3.fromRGB(40, 80, 50),
-        Success     = Color3.fromRGB(120, 220, 120),
-        Danger      = Color3.fromRGB(230, 80, 80)
-    }
+local Colors = {
+    Main         = Color3.fromRGB(150, 100, 255),   -- неоново-фиолетовый акцент
+    Secondary    = Color3.fromRGB(90, 60, 160),
+    Accent       = Color3.fromRGB(180, 140, 255),
+    Background   = Color3.fromRGB(6, 5, 9),          -- почти чёрный с фиолетовым
+    Panel        = Color3.fromRGB(12, 10, 18),
+    SidePanel    = Color3.fromRGB(9, 8, 13),
+    Element      = Color3.fromRGB(20, 17, 28),
+    ElementHover = Color3.fromRGB(32, 26, 44),
+    Text         = Color3.fromRGB(230, 225, 245),
+    SubText      = Color3.fromRGB(130, 120, 155),
+    Stroke       = Color3.fromRGB(40, 33, 58),
+    Success      = Color3.fromRGB(110, 220, 130),
+    Danger       = Color3.fromRGB(230, 70, 90)
 }
-
-local Colors = Themes.Netherite
 
 -- ============================================================
 --  СОСТОЯНИЕ
 -- ============================================================
 local State = {
-    EspBoxes       = false,
-    EspNames       = false,
-    EspDist        = false,
-    EspHP          = false,
-    EspHPNum       = false,
-    EspInv         = false,
-    EspTracers     = false,
-    EspSkeleton    = false,
+    EspBoxes       = false, EspNames = false, EspDist = false,
+    EspHP          = false, EspHPNum = false, EspInv = false,
+    EspInvIcons    = false, EspTracers = false, EspSkeleton = false,
     EspHead        = false,
     PlayerEspMaxDist = 800,
-    AimEnabled     = false,
-    TeamCheck      = false,
-    WallCheck      = true,
-    AimSmooth      = 0.15,
-    AimFOV         = 120,
-    NoBulletDrop   = false,
-    LegitSpeed     = false,
-    SpeedMultiplier= 1.5,
-    InfJump        = false,
-    FreecamEnabled = false,
-    FreecamSpeed   = 1,
-    FullBright     = false,
-    SulfurEsp      = false,
-    IronEsp        = false,
-    StoneEsp       = false,
-    NpcEsp         = false,
-    CrateEsp       = false,
-    OreEspMaxDist  = 400,
-    NpcEspMaxDist  = 600,
-    CrateEspMaxDist= 500,
+    AimEnabled     = false, TeamCheck = false, WallCheck = true,
+    AimSmooth      = 0.15, AimFOV = 120, NoBulletDrop = false,
+    AutoShoot      = false, AutoShootDelay = 0.08,
+    LegitSpeed     = false, SpeedMultiplier = 1.5,
+    InfJump        = false, FreecamEnabled = false, FreecamSpeed = 1,
+    FullBright     = false, SulfurEsp = false, IronEsp = false,
+    StoneEsp       = false, NpcEsp = false, CrateEsp = false,
+    OreEspMaxDist  = 400, NpcEspMaxDist = 600, CrateEspMaxDist = 500,
 }
 _G.NyzeState = State
 _G.NyzeBinds = {}
@@ -288,7 +148,7 @@ local Blur = Instance.new("BlurEffect", Lighting)
 Blur.Size, Blur.Enabled = 0, true
 
 -- ============================================================
---  SCREEN GUI
+--  GUI
 -- ============================================================
 local SG = Instance.new("ScreenGui")
 SG.Name = "NyzeRust_" .. tostring(math.random(1000, 9999))
@@ -307,20 +167,15 @@ local function new(class, props, parent)
     if parent then o.Parent = parent end
     return o
 end
-
 local function corner(parent, r)
     return new("UICorner", {CornerRadius = UDim.new(0, r or 4)}, parent)
 end
-
 local function stroke(parent, color, thick, trans)
     return new("UIStroke", {
-        Color = color or Colors.Stroke,
-        Thickness = thick or 1,
-        Transparency = trans or 0,
-        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        Color = color or Colors.Stroke, Thickness = thick or 1,
+        Transparency = trans or 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     }, parent)
 end
-
 local function padding(parent, px, py)
     local p = new("UIPadding", {}, parent)
     local ux, uy = UDim.new(0, px or 0), UDim.new(0, py or px or 0)
@@ -328,20 +183,15 @@ local function padding(parent, px, py)
     p.PaddingTop, p.PaddingBottom = uy, uy
     return p
 end
-
--- Minecraft-подобный "острый" угловой элемент
 local function pixelFrame(parent, color, size, pos, zindex)
     return new("Frame", {
-        BackgroundColor3 = color,
-        BorderSizePixel = 0,
-        Size = size,
-        Position = pos or UDim2.new(),
-        ZIndex = zindex or 1
+        BackgroundColor3 = color, BorderSizePixel = 0,
+        Size = size, Position = pos or UDim2.new(), ZIndex = zindex or 1
     }, parent)
 end
 
 -- ============================================================
---  TOGGLE LOGIC (с bindBtn)
+--  TOGGLE LOGIC
 -- ============================================================
 local function refreshToggleUI(prop, button, statusFrame)
     if not button or not statusFrame then return end
@@ -351,7 +201,7 @@ local function refreshToggleUI(prop, button, statusFrame)
             BackgroundColor3 = on and Colors.ElementHover or Colors.Element
         }):Play()
         TweenService:Create(statusFrame, TweenInfo.new(0.15), {
-            BackgroundColor3 = on and Colors.Main or Color3.fromRGB(60, 60, 70)
+            BackgroundColor3 = on and Colors.Main or Color3.fromRGB(40, 34, 54)
         }):Play()
         local knob = statusFrame:FindFirstChild("Knob")
         if knob then
@@ -361,7 +211,6 @@ local function refreshToggleUI(prop, button, statusFrame)
         end
     end)
 end
-
 local function toggleFeature(prop, button, statusFrame)
     State[prop] = not State[prop]
     refreshToggleUI(prop, button, statusFrame)
@@ -372,16 +221,11 @@ end
 -- ============================================================
 local function createBindBtn(parent, prop, button, statusFrame)
     local bindBtn = new("TextButton", {
-        Name = "Bind",
-        Size = UDim2.new(0, 56, 0, 22),
+        Name = "Bind", Size = UDim2.new(0, 56, 0, 22),
         Position = UDim2.new(1, -102, 0.5, -11),
-        BackgroundColor3 = Colors.Element,
-        Text = "—",
-        TextColor3 = Colors.SubText,
-        Font = Enum.Font.Code,
-        TextSize = 12,
-        AutoButtonColor = false,
-        ZIndex = 3
+        BackgroundColor3 = Colors.Element, Text = "—",
+        TextColor3 = Colors.SubText, Font = Enum.Font.Code,
+        TextSize = 12, AutoButtonColor = false, ZIndex = 3
     }, parent)
     corner(bindBtn, 3)
     stroke(bindBtn, Colors.Stroke, 1, 0.4)
@@ -392,7 +236,6 @@ local function createBindBtn(parent, prop, button, statusFrame)
         bindBtn.Text = "..."
         bindBtn.TextColor3 = Colors.Main
     end)
-
     UserInputService.InputBegan:Connect(function(input, processed)
         if processed then return end
         if isWaiting and input.UserInputType == Enum.UserInputType.Keyboard then
@@ -418,93 +261,65 @@ end
 -- ============================================================
 local M = new("Frame", {
     BackgroundColor3 = Colors.Background,
-    Position = UDim2.new(0.5, -340, 0, -500),
-    Size = UDim2.new(0, 680, 0, 460),
-    BorderSizePixel = 0,
-    Active = true,
-    Draggable = true,
-    Visible = false,
-    ClipsDescendants = true
+    Position = UDim2.new(0.5, -360, 0, -500),
+    Size = UDim2.new(0, 720, 0, 470),
+    BorderSizePixel = 0, Active = true, Draggable = true,
+    Visible = false, ClipsDescendants = true
 }, SG)
-
 if isMobile then
-    M.Size = UDim2.new(0, 560, 0, 360)
-    M.Position = UDim2.new(0.5, -280, 0, -400)
+    M.Size = UDim2.new(0, 580, 0, 370)
+    M.Position = UDim2.new(0.5, -290, 0, -400)
 end
+corner(M, 8)
+local MainStroke = stroke(M, Colors.Main, 2, 0.4)
 
-corner(M, 6)
-local MainStroke = stroke(M, Colors.Main, 2, 0.3)
-
--- ============================================================
---  TOP BAR (как в minecraft-читах: тонкая полоска сверху)
--- ============================================================
-local TopStrip = pixelFrame(M, Colors.Main, UDim2.new(1, 0, 0, 3), UDim2.new(0, 0, 0, 0), 5)
+-- Верхняя тонкая полоска
+pixelFrame(M, Colors.Main, UDim2.new(1, 0, 0, 2), UDim2.new(0, 0, 0, 0), 5)
 
 -- ============================================================
 --  TITLE BAR
 -- ============================================================
 local TitleBar = new("Frame", {
-    Size = UDim2.new(1, 0, 0, 56),
-    Position = UDim2.new(0, 0, 0, 3),
-    BackgroundColor3 = Colors.SidePanel,
-    BorderSizePixel = 0
+    Size = UDim2.new(1, 0, 0, 58), Position = UDim2.new(0, 0, 0, 2),
+    BackgroundColor3 = Colors.SidePanel, BorderSizePixel = 0
 }, M)
 
--- логотип-квадрат (пиксельный стиль)
 local LogoBox = new("Frame", {
-    Size = UDim2.new(0, 40, 0, 40),
-    Position = UDim2.new(0, 14, 0.5, -20),
-    BackgroundColor3 = Colors.Main,
-    BorderSizePixel = 0,
-    ZIndex = 2
+    Size = UDim2.new(0, 42, 0, 42),
+    Position = UDim2.new(0, 16, 0.5, -21),
+    BackgroundColor3 = Colors.Main, BorderSizePixel = 0, ZIndex = 2
 }, TitleBar)
-corner(LogoBox, 4)
+corner(LogoBox, 6)
 stroke(LogoBox, Colors.Accent, 2, 0.2)
-
-local LogoText = new("TextLabel", {
-    Size = UDim2.new(1, 0, 1, 0),
-    BackgroundTransparency = 1,
-    Text = "N",
-    TextColor3 = Colors.Text,
-    Font = Enum.Font.Code,
-    TextSize = 22,
-    ZIndex = 3
+new("TextLabel", {
+    Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1,
+    Text = "N", TextColor3 = Colors.Text, Font = Enum.Font.Code,
+    TextSize = 22, ZIndex = 3
 }, LogoBox)
 
-local Title = new("TextLabel", {
+new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 22),
-    Position = UDim2.new(0, 66, 0, 10),
-    BackgroundTransparency = 1,
-    Text = "NyzeRust",
-    TextColor3 = Colors.Text,
-    Font = Enum.Font.Code,
-    TextSize = 18,
-    TextXAlignment = Enum.TextXAlignment.Left
+    Position = UDim2.new(0, 70, 0, 12),
+    BackgroundTransparency = 1, Text = t("title"),
+    TextColor3 = Colors.Text, Font = Enum.Font.Code,
+    TextSize = 18, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
-
 local SubTitle = new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
-    Position = UDim2.new(0, 68, 0, 32),
-    BackgroundTransparency = 1,
-    Text = "",
-    TextColor3 = Colors.SubText,
-    Font = Enum.Font.Code,
-    TextSize = 11,
-    TextXAlignment = Enum.TextXAlignment.Left
+    Position = UDim2.new(0, 72, 0, 34),
+    BackgroundTransparency = 1, Text = t("subtitle") .. "  •  " .. t("menu_hint"),
+    TextColor3 = Colors.SubText, Font = Enum.Font.Code,
+    TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
 
 local CloseBtn = new("TextButton", {
     Size = UDim2.new(0, 32, 0, 32),
     Position = UDim2.new(1, -44, 0.5, -16),
-    BackgroundColor3 = Colors.Element,
-    Text = "×",
-    TextColor3 = Colors.Text,
-    Font = Enum.Font.Code,
-    TextSize = 20,
-    AutoButtonColor = false,
-    ZIndex = 2
+    BackgroundColor3 = Colors.Element, Text = "×",
+    TextColor3 = Colors.Text, Font = Enum.Font.Code,
+    TextSize = 20, AutoButtonColor = false, ZIndex = 2
 }, TitleBar)
-corner(CloseBtn, 3)
+corner(CloseBtn, 4)
 CloseBtn.MouseButton1Click:Connect(function() toggleMenu() end)
 CloseBtn.MouseEnter:Connect(function()
     TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Danger}):Play()
@@ -514,48 +329,41 @@ CloseBtn.MouseLeave:Connect(function()
 end)
 
 -- ============================================================
---  CANVAS
+--  TAB BAR (сверху, а не сбоку!)
 -- ============================================================
-local Canvas = new("Frame", {
-    Size = UDim2.new(1, 0, 1, -59),
-    Position = UDim2.new(0, 0, 0, 59),
-    BackgroundTransparency = 1
-}, M)
-
--- ============================================================
---  SIDEBAR (вкладки)
--- ============================================================
-local Side = new("Frame", {
-    Position = UDim2.new(0, 12, 0, 12),
-    Size = UDim2.new(0, 140, 1, -24),
+local TabBar = new("Frame", {
+    Size = UDim2.new(1, -24, 0, 44),
+    Position = UDim2.new(0, 12, 0, 68),
     BackgroundColor3 = Colors.SidePanel,
     BorderSizePixel = 0
-}, Canvas)
-corner(Side, 4)
-stroke(Side, Colors.Stroke, 1, 0.5)
+}, M)
+corner(TabBar, 6)
+stroke(TabBar, Colors.Stroke, 1, 0.5)
 
-local SideLayout = new("UIListLayout", {
+local TabLayout = new("UIListLayout", {
     Padding = UDim.new(0, 6),
+    FillDirection = Enum.FillDirection.Horizontal,
+    VerticalAlignment = Enum.VerticalAlignment.Center,
     SortOrder = Enum.SortOrder.LayoutOrder
-}, Side)
-padding(Side, 8)
+}, TabBar)
+padding(TabBar, 6, 6)
 
 -- ============================================================
 --  CONTAINER (контент вкладок)
 -- ============================================================
 local Container = new("ScrollingFrame", {
-    Position = UDim2.new(0, 164, 0, 12),
-    Size = UDim2.new(1, -176, 1, -24),
+    Position = UDim2.new(0, 12, 0, 122),
+    Size = UDim2.new(1, -24, 1, -134),
     BackgroundColor3 = Colors.Panel,
     BorderSizePixel = 0,
     ScrollBarThickness = isMobile and 0 or 3,
     ScrollBarImageColor3 = Colors.Main,
     CanvasSize = UDim2.new(0, 0, 0, 0),
     AutomaticCanvasSize = Enum.AutomaticSize.Y
-}, Canvas)
-corner(Container, 4)
+}, M)
+corner(Container, 6)
 stroke(Container, Colors.Stroke, 1, 0.5)
-padding(Container, 10)
+padding(Container, 12)
 
 local ContainerLayout = new("UIListLayout", {
     Padding = UDim.new(0, 6),
@@ -563,84 +371,65 @@ local ContainerLayout = new("UIListLayout", {
 }, Container)
 
 -- ============================================================
---  ФУНКЦИИ UI
+--  UI ФУНКЦИИ
 -- ============================================================
-
--- Заголовок категории внутри контейнера
 local function createCategory(title, order)
     local f = new("Frame", {
-        Size = UDim2.new(1, -6, 0, 30),
-        BackgroundTransparency = 1,
-        LayoutOrder = order
+        Size = UDim2.new(1, -6, 0, 28),
+        BackgroundTransparency = 1, LayoutOrder = order
     }, Container)
-    local bar = pixelFrame(f, Colors.Main, UDim2.new(0, 3, 0, 16), UDim2.new(0, 2, 0.5, -8))
-    local lbl = new("TextLabel", {
+    pixelFrame(f, Colors.Main, UDim2.new(0, 3, 0, 14), UDim2.new(0, 2, 0.5, -7))
+    new("TextLabel", {
         Size = UDim2.new(1, -20, 1, 0),
         Position = UDim2.new(0, 14, 0, 0),
-        BackgroundTransparency = 1,
-        Text = title,
-        TextColor3 = Colors.Main,
-        Font = Enum.Font.Code,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left
+        BackgroundTransparency = 1, Text = title,
+        TextColor3 = Colors.Main, Font = Enum.Font.Code,
+        TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left
     }, f)
     return f
 end
 
--- Toggle
 local function createToggle(parentTab, label, prop, order)
     local b = new("TextButton", {
         Size = UDim2.new(1, -6, 0, 40),
         BackgroundColor3 = State[prop] and Colors.ElementHover or Colors.Element,
-        Text = "",
-        AutoButtonColor = false,
-        LayoutOrder = order,
-        Visible = false
+        Text = "", AutoButtonColor = false,
+        LayoutOrder = order, Visible = false
     }, Container)
     corner(b, 4)
     stroke(b, Colors.Stroke, 1, 0.5)
     table.insert(parentTab, b)
 
-    -- маленький пиксель-маркер слева
     local marker = pixelFrame(b, State[prop] and Colors.Main or Colors.Stroke,
         UDim2.new(0, 3, 0, 22), UDim2.new(0, 0, 0.5, -11))
-
-    local lbl = new("TextLabel", {
+    new("TextLabel", {
         Size = UDim2.new(1, -150, 1, 0),
         Position = UDim2.new(0, 16, 0, 0),
-        BackgroundTransparency = 1,
-        Text = label,
-        TextColor3 = Colors.Text,
-        Font = Enum.Font.Code,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left
+        BackgroundTransparency = 1, Text = label,
+        TextColor3 = Colors.Text, Font = Enum.Font.Code,
+        TextSize = 13, TextXAlignment = Enum.TextXAlignment.Left
     }, b)
 
     local status = new("Frame", {
         Size = UDim2.new(0, 34, 0, 18),
         Position = UDim2.new(1, -48, 0.5, -9),
-        BackgroundColor3 = State[prop] and Colors.Main or Color3.fromRGB(60, 60, 70),
+        BackgroundColor3 = State[prop] and Colors.Main or Color3.fromRGB(40, 34, 54),
         BorderSizePixel = 0
     }, b)
     corner(status, 3)
-
-    local knob = new("Frame", {
-        Name = "Knob",
-        Size = UDim2.new(0, 14, 0, 14),
+    new("Frame", {
+        Name = "Knob", Size = UDim2.new(0, 14, 0, 14),
         Position = State[prop] and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
-        BackgroundColor3 = Color3.new(1, 1, 1),
-        BorderSizePixel = 0
+        BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0
     }, status)
-    corner(knob, 2)
+    corner(status:FindFirstChild("Knob"), 2)
 
-    -- синхронизация маркера с toggle
     b.MouseButton1Click:Connect(function()
         toggleFeature(prop, b, status)
         TweenService:Create(marker, TweenInfo.new(0.15), {
             BackgroundColor3 = State[prop] and Colors.Main or Colors.Stroke
         }):Play()
     end)
-
     b.MouseEnter:Connect(function()
         if not State[prop] then
             TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
@@ -651,64 +440,50 @@ local function createToggle(parentTab, label, prop, order)
             TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
         end
     end)
-
     createBindBtn(b, prop, b, status)
 end
 
--- Slider
 local function createSlider(parentTab, label, prop, min, max, order)
     local f = new("Frame", {
         Size = UDim2.new(1, -6, 0, 54),
         BackgroundColor3 = Colors.Element,
-        LayoutOrder = order,
-        Visible = false,
-        BorderSizePixel = 0
+        LayoutOrder = order, Visible = false, BorderSizePixel = 0
     }, Container)
     corner(f, 4)
     stroke(f, Colors.Stroke, 1, 0.5)
     table.insert(parentTab, f)
 
-    local lbl = new("TextLabel", {
+    new("TextLabel", {
         Size = UDim2.new(1, -110, 0, 18),
         Position = UDim2.new(0, 14, 0, 8),
-        BackgroundTransparency = 1,
-        Text = label,
-        TextColor3 = Colors.Text,
-        Font = Enum.Font.Code,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left
+        BackgroundTransparency = 1, Text = label,
+        TextColor3 = Colors.Text, Font = Enum.Font.Code,
+        TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left
     }, f)
-
     local valLbl = new("TextLabel", {
         Size = UDim2.new(0, 90, 0, 18),
         Position = UDim2.new(1, -104, 0, 8),
-        BackgroundTransparency = 1,
-        Text = tostring(State[prop]),
-        TextColor3 = Colors.Main,
-        Font = Enum.Font.Code,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Right
+        BackgroundTransparency = 1, Text = tostring(State[prop]),
+        TextColor3 = Colors.Main, Font = Enum.Font.Code,
+        TextSize = 12, TextXAlignment = Enum.TextXAlignment.Right
     }, f)
 
     local barBg = new("Frame", {
         Size = UDim2.new(1, -28, 0, 6),
         Position = UDim2.new(0, 14, 0, 36),
-        BackgroundColor3 = Color3.fromRGB(50, 50, 60),
+        BackgroundColor3 = Color3.fromRGB(35, 30, 46),
         BorderSizePixel = 0
     }, f)
     corner(barBg, 2)
-
     local fill = new("Frame", {
         Size = UDim2.new((State[prop] - min) / (max - min), 0, 1, 0),
-        BackgroundColor3 = Colors.Main,
-        BorderSizePixel = 0
+        BackgroundColor3 = Colors.Main, BorderSizePixel = 0
     }, barBg)
     corner(fill, 2)
 
     local trigger = new("TextButton", {
         Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = ""
+        BackgroundTransparency = 1, Text = ""
     }, barBg)
 
     local dragging = false
@@ -720,12 +495,10 @@ local function createSlider(parentTab, label, prop, min, max, order)
         fill.Size = UDim2.new(pos, 0, 1, 0)
         valLbl.Text = tostring(val)
     end
-
     trigger.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1
         or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            update(input)
+            dragging = true; update(input)
         end
     end)
     UserInputService.InputEnded:Connect(function(input)
@@ -742,24 +515,18 @@ local function createSlider(parentTab, label, prop, min, max, order)
     end)
 end
 
--- Кнопка действия
 local function createButton(parentTab, label, callback, order)
     local b = new("TextButton", {
         Size = UDim2.new(1, -6, 0, 34),
         BackgroundColor3 = Colors.Element,
-        Text = "  " .. label,
-        TextColor3 = Colors.Text,
-        Font = Enum.Font.Code,
-        TextSize = 12,
+        Text = "  " .. label, TextColor3 = Colors.Text,
+        Font = Enum.Font.Code, TextSize = 12,
         TextXAlignment = Enum.TextXAlignment.Left,
-        AutoButtonColor = false,
-        LayoutOrder = order,
-        Visible = false
+        AutoButtonColor = false, LayoutOrder = order, Visible = false
     }, Container)
     corner(b, 4)
     stroke(b, Colors.Stroke, 1, 0.5)
     table.insert(parentTab, b)
-
     b.MouseButton1Click:Connect(callback)
     b.MouseEnter:Connect(function()
         TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
@@ -770,7 +537,7 @@ local function createButton(parentTab, label, callback, order)
 end
 
 -- ============================================================
---  ВКЛАДКИ
+--  ВКЛАДКИ (сверху)
 -- ============================================================
 local Tabs = {VISUALS = {}, AIM = {}, PLAYER = {}, WORLD = {}, SETTINGS = {}}
 local tabButtons = {}
@@ -786,40 +553,29 @@ local function showTab(name)
             BackgroundColor3 = (key == name) and Colors.ElementHover or Colors.Element,
             TextColor3 = (key == name) and Colors.Main or Colors.Text
         }):Play()
-        local bar = btn:FindFirstChild("ActiveBar")
-        if bar then bar.Visible = (key == name) end
     end
 end
 
 local function createTabBtn(name, label, order)
     local b = new("TextButton", {
-        Size = UDim2.new(1, 0, 0, 38),
+        Size = UDim2.new(0, 110, 0, 32),
         BackgroundColor3 = Colors.Element,
-        Text = "   " .. label,
-        TextColor3 = Colors.Text,
-        Font = Enum.Font.Code,
-        TextSize = 12,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        AutoButtonColor = false,
-        LayoutOrder = order
-    }, Side)
-    corner(b, 3)
+        Text = label, TextColor3 = Colors.Text,
+        Font = Enum.Font.Code, TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        AutoButtonColor = false, LayoutOrder = order
+    }, TabBar)
+    corner(b, 4)
     stroke(b, Colors.Stroke, 1, 0.4)
-
-    local activeBar = pixelFrame(b, Colors.Main, UDim2.new(0, 3, 0, 22), UDim2.new(0, 0, 0.5, -11))
-    activeBar.Name = "ActiveBar"
-    activeBar.Visible = false
-
     tabButtons[name] = b
-
     b.MouseButton1Click:Connect(function() showTab(name) end)
     b.MouseEnter:Connect(function()
-        if not activeBar.Visible then
+        if b.TextColor3 ~= Colors.Main then
             TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
         end
     end)
     b.MouseLeave:Connect(function()
-        if not activeBar.Visible then
+        if b.TextColor3 ~= Colors.Main then
             TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
         end
     end)
@@ -834,37 +590,40 @@ createTabBtn("PLAYER",   t("tab_player"),   3)
 createTabBtn("WORLD",    t("tab_world"),    4)
 createTabBtn("SETTINGS", t("tab_settings"), 5)
 
--- ===== VISUALS: ESP =====
+-- VISUALS
 createCategory(t("cat_esp"), 1)
-createToggle(Tabs.VISUALS, t("esp_boxes"),    "EspBoxes",    2)
-createToggle(Tabs.VISUALS, t("esp_names"),    "EspNames",    3)
-createToggle(Tabs.VISUALS, t("esp_dist"),     "EspDist",     4)
-createToggle(Tabs.VISUALS, t("esp_hp"),       "EspHP",       5)
-createToggle(Tabs.VISUALS, t("esp_hpnum"),    "EspHPNum",    6)
-createToggle(Tabs.VISUALS, t("esp_inv"),      "EspInv",      7)
-createToggle(Tabs.VISUALS, t("esp_tracers"),  "EspTracers",  8)
-createToggle(Tabs.VISUALS, t("esp_skeleton"), "EspSkeleton", 9)
-createToggle(Tabs.VISUALS, t("esp_head"),     "EspHead",    10)
-createSlider(Tabs.VISUALS, t("esp_maxdist"),  "PlayerEspMaxDist", 100, 5000, 11)
+createToggle(Tabs.VISUALS, t("esp_boxes"),     "EspBoxes",    2)
+createToggle(Tabs.VISUALS, t("esp_names"),     "EspNames",    3)
+createToggle(Tabs.VISUALS, t("esp_dist"),      "EspDist",     4)
+createToggle(Tabs.VISUALS, t("esp_hp"),        "EspHP",       5)
+createToggle(Tabs.VISUALS, t("esp_hpnum"),     "EspHPNum",    6)
+createToggle(Tabs.VISUALS, t("esp_inv"),       "EspInv",      7)
+createToggle(Tabs.VISUALS, t("esp_inv_icons"), "EspInvIcons", 8)
+createToggle(Tabs.VISUALS, t("esp_tracers"),   "EspTracers",  9)
+createToggle(Tabs.VISUALS, t("esp_skeleton"),  "EspSkeleton", 10)
+createToggle(Tabs.VISUALS, t("esp_head"),      "EspHead",     11)
+createSlider(Tabs.VISUALS, t("esp_maxdist"),   "PlayerEspMaxDist", 100, 5000, 12)
 
--- ===== AIM =====
+-- AIM
 createCategory(t("cat_aim"), 20)
-createToggle(Tabs.AIM, t("aim_enabled"), "AimEnabled",  21)
-createToggle(Tabs.AIM, t("aim_team"),    "TeamCheck",   22)
-createToggle(Tabs.AIM, t("aim_wall"),    "WallCheck",   23)
-createToggle(Tabs.AIM, t("aim_nodrop"),  "NoBulletDrop",24)
-createSlider(Tabs.AIM, t("aim_smooth"),  "AimSmooth",   0.01, 1, 25)
-createSlider(Tabs.AIM, t("aim_fov"),     "AimFOV",      20, 800, 26)
+createToggle(Tabs.AIM, t("aim_enabled"),   "AimEnabled",   21)
+createToggle(Tabs.AIM, t("aim_team"),      "TeamCheck",    22)
+createToggle(Tabs.AIM, t("aim_wall"),      "WallCheck",    23)
+createToggle(Tabs.AIM, t("aim_nodrop"),    "NoBulletDrop", 24)
+createToggle(Tabs.AIM, t("autoshoot"),     "AutoShoot",    25)
+createSlider(Tabs.AIM, t("autoshoot_delay"),"AutoShootDelay",0.01, 0.5, 26)
+createSlider(Tabs.AIM, t("aim_smooth"),    "AimSmooth",    0.01, 1, 27)
+createSlider(Tabs.AIM, t("aim_fov"),       "AimFOV",       20, 800, 28)
 
--- ===== PLAYER =====
+-- PLAYER
 createCategory(t("cat_misc"), 30)
-createToggle(Tabs.PLAYER, t("ply_speed"),    "LegitSpeed",    31)
-createSlider(Tabs.PLAYER, t("ply_speedpow"), "SpeedMultiplier",1, 5, 32)
-createToggle(Tabs.PLAYER, t("ply_infjump"),  "InfJump",       33)
-createToggle(Tabs.PLAYER, t("ply_freecam"),  "FreecamEnabled",34)
-createSlider(Tabs.PLAYER, t("ply_flyspeed"), "FreecamSpeed",  0.1, 10, 35)
+createToggle(Tabs.PLAYER, t("ply_speed"),    "LegitSpeed",     31)
+createSlider(Tabs.PLAYER, t("ply_speedpow"), "SpeedMultiplier", 1, 5, 32)
+createToggle(Tabs.PLAYER, t("ply_infjump"),  "InfJump",        33)
+createToggle(Tabs.PLAYER, t("ply_freecam"),  "FreecamEnabled", 34)
+createSlider(Tabs.PLAYER, t("ply_flyspeed"), "FreecamSpeed",   0.1, 10, 35)
 
--- ===== WORLD =====
+-- WORLD
 createCategory(t("cat_world"), 40)
 createToggle(Tabs.WORLD, t("wld_fullbr"), "FullBright", 41)
 createToggle(Tabs.WORLD, t("wld_sulfur"), "SulfurEsp",  42)
@@ -876,47 +635,10 @@ createSlider(Tabs.WORLD, t("wld_ore_dist"),   "OreEspMaxDist",  50, 3000, 47)
 createSlider(Tabs.WORLD, t("wld_npc_dist"),   "NpcEspMaxDist",  50, 3000, 48)
 createSlider(Tabs.WORLD, t("wld_crate_dist"), "CrateEspMaxDist",50, 3000, 49)
 
--- ===== SETTINGS =====
-createCategory(t("set_theme"), 60)
-createButton(Tabs.SETTINGS, t("theme_netherite"), function() ApplyTheme("Netherite") end, 61)
-createButton(Tabs.SETTINGS, t("theme_redstone"),  function() ApplyTheme("Redstone")  end, 62)
-createButton(Tabs.SETTINGS, t("theme_diamond"),   function() ApplyTheme("Diamond")   end, 63)
-createButton(Tabs.SETTINGS, t("theme_emerald"),   function() ApplyTheme("Emerald")   end, 64)
-
-createCategory(t("set_lang"), 70)
-createButton(Tabs.SETTINGS, "Русский (RU)", function() LANG = "RU" ; RefreshLocalization() end, 71)
-createButton(Tabs.SETTINGS, "English (EN)", function() LANG = "EN" ; RefreshLocalization() end, 72)
-
--- ============================================================
---  APPLY THEME
--- ============================================================
-function ApplyTheme(themeName)
-    local th = Themes[themeName]
-    if not th then return end
-    Colors = th
-
-    M.BackgroundColor3 = th.Background
-    MainStroke.Color = th.Main
-    TitleBar.BackgroundColor3 = th.SidePanel
-    Side.BackgroundColor3 = th.SidePanel
-    Container.BackgroundColor3 = th.Panel
-    LogoBox.BackgroundColor3 = th.Main
-    TopStrip.BackgroundColor3 = th.Main
-    Title.TextColor3 = th.Text
-    SubTitle.TextColor3 = th.SubText
-    CloseBtn.BackgroundColor3 = th.Element
-    CloseBtn.TextColor3 = th.Text
-
-    for _, obj in ipairs(Container:GetDescendants()) do
-        if obj:IsA("Frame") then
-            if obj.Name == "Knob" then
-                obj.BackgroundColor3 = Color3.new(1, 1, 1)
-            elseif obj ~= nil and obj:FindFirstChild("Label") == nil then
-                -- не трогаем fill и barBg
-            end
-        end
-    end
-end
+-- SETTINGS
+createCategory(t("cat_settings"), 60)
+createButton(Tabs.SETTINGS, "Русский (RU)", function() LANG = "RU"; RefreshLocalization() end, 61)
+createButton(Tabs.SETTINGS, "English (EN)", function() LANG = "EN"; RefreshLocalization() end, 62)
 
 -- ============================================================
 --  REFRESH LOCALIZATION
@@ -924,8 +646,6 @@ end
 function RefreshLocalization()
     SubTitle.Text = t("subtitle") .. "  •  " .. t("menu_hint")
 end
-
-RefreshLocalization()
 
 -- ============================================================
 --  TOGGLE MENU
@@ -938,16 +658,16 @@ function toggleMenu()
         if not isMobile then UserInputService.MouseIconEnabled = true end
         TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 12}):Play()
         local target = isMobile
-            and UDim2.new(0.5, -280, 0.5, -180)
-            or  UDim2.new(0.5, -340, 0.5, -230)
+            and UDim2.new(0.5, -290, 0.5, -185)
+            or  UDim2.new(0.5, -360, 0.5, -235)
         TweenService:Create(M, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
             {Position = target}):Play()
     else
         if not isMobile then UserInputService.MouseIconEnabled = false end
         TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 0}):Play()
         local target = isMobile
-            and UDim2.new(0.5, -280, 0, -400)
-            or  UDim2.new(0.5, -340, 0, -500)
+            and UDim2.new(0.5, -290, 0, -400)
+            or  UDim2.new(0.5, -360, 0, -500)
         local tw = TweenService:Create(M, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
             {Position = target})
         tw:Play()
@@ -964,12 +684,9 @@ if isMobile then
     local OpenBtn = new("TextButton", {
         Size = UDim2.new(0, 52, 0, 52),
         Position = UDim2.new(0, 12, 0.42, 0),
-        BackgroundColor3 = Colors.SidePanel,
-        Text = "N",
-        TextColor3 = Colors.Main,
-        Font = Enum.Font.Code,
-        TextSize = 24,
-        AutoButtonColor = false
+        BackgroundColor3 = Colors.SidePanel, Text = "N",
+        TextColor3 = Colors.Main, Font = Enum.Font.Code,
+        TextSize = 24, AutoButtonColor = false
     }, SG)
     corner(OpenBtn, 6)
     stroke(OpenBtn, Colors.Main, 2, 0.2)
@@ -977,56 +694,80 @@ if isMobile then
 end
 
 -- ============================================================
---  GAME LOGIC
+--  ИКОНКИ ПРЕДМЕТОВ (кэш)
 -- ============================================================
+local IconCache = {}       -- [itemName] = rbxassetid
+local IconLoading = {}
 
--- AntiBulletDrop
-workspace.DescendantAdded:Connect(function(obj)
-    if State.NoBulletDrop and obj:IsA("BasePart") and (obj.Name:find("Bullet") or obj.Name:find("Projectile")) then
-        pcall(function()
-            local bf = Instance.new("BodyForce")
-            bf.Force = Vector3.new(0, obj:GetMass() * workspace.Gravity, 0)
-            bf.Parent = obj
+local function getItemIcon(itemName)
+    if not itemName or itemName == "" then return nil end
+    if IconCache[itemName] then return IconCache[itemName] end
+    if IconLoading[itemName] then return nil end
+    IconLoading[itemName] = true
+
+    task.spawn(function()
+        local ok, icon = pcall(function()
+            -- Пытаемся получить иконку через Marketplace / Avatar API
+            -- Пробуем найти в ReplicatedStorage, StarterPack, Backpack и в тултипах
+            -- Основной путь: ищем Tool с этим именем где-то и берём TextureId
+            local searchRoots = {game:GetService("ReplicatedStorage"), game:GetService("StarterPack"), game:GetService("Workspace")}
+            for _, root in ipairs(searchRoots) do
+                for _, obj in ipairs(root:GetDescendants()) do
+                    if obj:IsA("Tool") and obj.Name == itemName then
+                        -- Tool.TextureId или ищем ImageLabel/Decal
+                        if obj.TextureId and obj.TextureId ~= "" then
+                            return obj.TextureId
+                        end
+                        for _, d in ipairs(obj:GetDescendants()) do
+                            if d:IsA("Decal") or d:IsA("Texture") then
+                                return d.Texture
+                            end
+                            if d:IsA("ImageLabel") and d.Image ~= "" then
+                                return d.Image
+                            end
+                        end
+                    end
+                end
+            end
+            -- Если не нашли — пробуем через rbxthumb по assetId (не работает без ID)
+            return nil
         end)
-    end
-end)
 
--- isVisible
-local function isVisible(targetPart)
-    if not State.WallCheck then return true end
-    local char = LocalPlayer.Character
-    if not char then return false end
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {char, targetPart.Parent}
-    local ray = workspace:Raycast(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position), params)
-    return ray == nil
+        if ok and icon and icon ~= "" then
+            IconCache[itemName] = icon
+        else
+            IconCache[itemName] = false  -- помечаем как "нет иконки"
+        end
+        IconLoading[itemName] = nil
+    end)
+    return nil
 end
 
 -- ============================================================
---  INVENTORY SCAN (Roblox-инвентарь через Backpack + Character)
+--  INVENTORY (с иконками)
 -- ============================================================
-local function getPlayerInventoryText(p)
+local function getPlayerInventoryItems(p)
     local items = {}
-    -- Backpack (неэкипированное)
     local bp = p:FindFirstChildOfClass("Backpack")
     if bp then
-        for _, t in ipairs(bp:GetChildren()) do
-            if t:IsA("Tool") then table.insert(items, t.Name) end
+        for _, tool in ipairs(bp:GetChildren()) do
+            if tool:IsA("Tool") then
+                table.insert(items, {name = tool.Name, equipped = false, tool = tool})
+            end
         end
     end
-    -- Character (экипированное)
     if p.Character then
-        for _, t in ipairs(p.Character:GetChildren()) do
-            if t:IsA("Tool") then table.insert(items, "[E] " .. t.Name) end
+        for _, tool in ipairs(p.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                table.insert(items, {name = tool.Name, equipped = true, tool = tool})
+            end
         end
     end
-    if #items == 0 then return nil end
-    return table.concat(items, "\n")
+    return items
 end
 
 -- ============================================================
---  WORLD ESP (ore/npc/crate)
+--  WORLD ESP
 -- ============================================================
 local function applyCrateVisuals(obj, name, color)
     if not obj:FindFirstChild("CrateHighlight") then
@@ -1040,11 +781,11 @@ local function applyCrateVisuals(obj, name, color)
             Size = UDim2.new(0, 120, 0, 40),
             ExtentsOffset = Vector3.new(0, 2, 0)
         }, obj)
-        local lbl = new("TextLabel", {
+        new("TextLabel", {
             Name = "Label", BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), TextSize = 13,
-            TextColor3 = Color3.new(1, 1, 1),
-            Font = Enum.Font.Code, TextStrokeTransparency = 0
+            TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.Code,
+            TextStrokeTransparency = 0
         }, bg)
     end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -1065,7 +806,7 @@ end
 local function updateNpcEsp()
     local npcFolder = workspace:FindFirstChild("Npc")
     if not npcFolder then return end
-    for _, npc in pairs(npcFolder:GetChildren()) do
+    for _, npc in ipairs(npcFolder:GetChildren()) do
         if npc:IsA("Model") then
             if not npc:FindFirstChild("NpcHighlight") then
                 local h = Instance.new("Highlight", npc)
@@ -1101,8 +842,8 @@ local function applyOreVisuals(obj, name, color)
         new("TextLabel", {
             Name = "Label", BackgroundTransparency = 1,
             Size = UDim2.new(1, 0, 1, 0), TextSize = 13,
-            TextColor3 = Color3.new(1, 1, 1),
-            Font = Enum.Font.Code, TextStrokeTransparency = 0
+            TextColor3 = Color3.new(1, 1, 1), Font = Enum.Font.Code,
+            TextStrokeTransparency = 0
         }, bg)
     end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -1125,7 +866,6 @@ end
 RunService.RenderStepped:Connect(function()
     pcall(function()
         updateNpcEsp()
-
         if State.LegitSpeed then
             local char = LocalPlayer.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
@@ -1134,15 +874,14 @@ RunService.RenderStepped:Connect(function()
                 root.CFrame = root.CFrame + (hum.MoveDirection * (State.SpeedMultiplier / 10))
             end
         end
-
         local ores = workspace:FindFirstChild("ores")
         if ores then
             for _, ore in ipairs(ores:GetChildren()) do
                 local en = (ore.Name == "sulfur" and State.SulfurEsp)
-                        or (ore.Name == "iron"   and State.IronEsp)
-                        or (ore.Name == "stone"  and State.StoneEsp)
+                        or (ore.Name == "iron" and State.IronEsp)
+                        or (ore.Name == "stone" and State.StoneEsp)
                 local col = (ore.Name == "sulfur" and Color3.new(1, 1, 0))
-                         or (ore.Name == "iron"   and Color3.fromRGB(180, 180, 180))
+                         or (ore.Name == "iron" and Color3.fromRGB(180, 180, 180))
                          or Color3.fromRGB(220, 220, 220)
                 if en then
                     applyOreVisuals(ore, ore.Name, col)
@@ -1151,7 +890,6 @@ RunService.RenderStepped:Connect(function()
                 end
             end
         end
-
         local crates = workspace:FindFirstChild("Crates")
         if crates then
             for _, crate in ipairs(crates:GetChildren()) do
@@ -1168,7 +906,6 @@ RunService.RenderStepped:Connect(function()
                 end
             end
         end
-
         if State.FullBright then
             Lighting.Ambient = Color3.new(1, 1, 1)
             Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
@@ -1179,7 +916,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ============================================================
---  AIMBOT
+--  AIMBOT + AUTO-SHOOT
 -- ============================================================
 local function getClosest()
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -1193,8 +930,22 @@ local function getClosest()
                     local sp, on = Camera:WorldToViewportPoint(head.Position)
                     if on then
                         local dist = (Vector2.new(sp.X, sp.Y) - center).Magnitude
-                        if dist < mag and dist < State.AimFOV and isVisible(head) then
-                            mag, target = dist, head
+                        if dist < mag and dist < State.AimFOV then
+                            local visible = true
+                            if State.WallCheck then
+                                local char = LocalPlayer.Character
+                                if char then
+                                    local params = RaycastParams.new()
+                                    params.FilterType = Enum.RaycastFilterType.Exclude
+                                    params.FilterDescendantsInstances = {char, v.Character}
+                                    local ray = workspace:Raycast(Camera.CFrame.Position,
+                                        (head.Position - Camera.CFrame.Position), params)
+                                    visible = (ray == nil)
+                                end
+                            end
+                            if visible then
+                                mag, target = dist, head
+                            end
                         end
                     end
                 end
@@ -1204,8 +955,24 @@ local function getClosest()
     return target
 end
 
+-- Авто-выстрел: виртуальный клик мышью
+local lastShoot = 0
+local function tryAutoShoot(target)
+    if not State.AutoShoot then return end
+    if not target then return end
+    local now = tick()
+    if now - lastShoot < State.AutoShootDelay then return end
+    lastShoot = now
+    pcall(function()
+        -- Виртуальный клик ЛКМ (для оружия, которое стреляет на MouseButton1)
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, true, game, 1)
+        task.wait(0.01)
+        VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
+    end)
+end
+
 -- ============================================================
---  ESP (Drawing API)
+--  ESP (Drawing)
 -- ============================================================
 local espElements = {}
 local FOVring = nil
@@ -1227,7 +994,13 @@ if hasDrawing then
                 bone1   = Drawing.new("Line"),
                 bone2   = Drawing.new("Line"),
                 bone3   = Drawing.new("Line"),
-                bone4   = Drawing.new("Line")
+                bone4   = Drawing.new("Line"),
+                icon1   = Drawing.new("Image"),
+                icon2   = Drawing.new("Image"),
+                icon3   = Drawing.new("Image"),
+                icon4   = Drawing.new("Image"),
+                icon5   = Drawing.new("Image"),
+                icon6   = Drawing.new("Image"),
             }
         end)
         if not ok or not d then return end
@@ -1250,6 +1023,13 @@ if hasDrawing then
         for _, b in ipairs({d.bone1, d.bone2, d.bone3, d.bone4}) do
             b.Thickness, b.Color = 1, Colors.Accent
         end
+        -- Иконки предметов
+        for _, ic in ipairs({d.icon1, d.icon2, d.icon3, d.icon4, d.icon5, d.icon6}) do
+            ic.Visible = false
+            ic.Size = Vector2.new(20, 20)
+            ic.Transparency = 1
+            ic.Rounding = 3
+        end
         espElements[p] = d
     end
 
@@ -1261,20 +1041,25 @@ if hasDrawing then
 
     RunService.RenderStepped:Connect(function()
         pcall(function()
-            -- FOV
+            -- FOV + AIM
             if FOVring then
                 FOVring.Visible = State.AimEnabled
                 if State.AimEnabled then
                     FOVring.Radius = State.AimFOV
                     FOVring.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
                     FOVring.Color = Colors.Main
-                    local isAiming = (not isMobile and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)) or isMobile
+
+                    local isAiming = (not isMobile and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2))
+                                   or (isMobile and State.AutoShoot)
+                    if State.AutoShoot then isAiming = true end  -- авто-шот сам стреляет
+
                     if isAiming then
                         local tgt = getClosest()
                         if tgt then
                             Camera.CFrame = Camera.CFrame:Lerp(
                                 CFrame.new(Camera.CFrame.Position, tgt.Position),
                                 State.AimSmooth)
+                            if State.AutoShoot then tryAutoShoot(tgt) end
                         end
                     end
                 end
@@ -1285,7 +1070,6 @@ if hasDrawing then
                 local r = c and c:FindFirstChild("HumanoidRootPart")
                 local h = c and c:FindFirstChildOfClass("Humanoid")
                 local head = c and c:FindFirstChild("Head")
-
                 local shouldDraw = false
 
                 if c and r and h and h.Health > 0 then
@@ -1301,13 +1085,13 @@ if hasDrawing then
                         for i, l in ipairs(d.box) do
                             l.Visible = State.EspBoxes
                             l.Color = Colors.Accent
-                            if i == 1 then l.From, l.To = Vector2.new(x, y),        Vector2.new(x + sx, y)
+                            if i == 1 then l.From, l.To = Vector2.new(x, y),          Vector2.new(x + sx, y)
                             elseif i == 2 then l.From, l.To = Vector2.new(x + sx, y), Vector2.new(x + sx, y + sy)
                             elseif i == 3 then l.From, l.To = Vector2.new(x + sx, y + sy), Vector2.new(x, y + sy)
-                            else l.From, l.To = Vector2.new(x, y + sy), Vector2.new(x, y) end
+                            else               l.From, l.To = Vector2.new(x, y + sy), Vector2.new(x, y) end
                         end
 
-                        -- HP bar (слева от бокса)
+                        -- HP
                         local hpRatio = math.clamp(h.Health / math.max(h.MaxHealth, 1), 0, 1)
                         d.hpBg.Visible, d.hpFill.Visible = State.EspHP, State.EspHP
                         if State.EspHP then
@@ -1317,8 +1101,6 @@ if hasDrawing then
                             d.hpFill.To   = Vector2.new(x - 8, y + sy - sy * hpRatio)
                             d.hpFill.Color = Color3.fromRGB(255 * (1 - hpRatio), 255 * hpRatio, 60)
                         end
-
-                        -- HP number
                         d.hpText.Visible = State.EspHPNum
                         if State.EspHPNum then
                             d.hpText.Text = math.floor(h.Health) .. " / " .. math.floor(h.MaxHealth)
@@ -1343,17 +1125,41 @@ if hasDrawing then
                         end
 
                         -- INVENTORY
-                        d.inv.Visible = State.EspInv
-                        if State.EspInv then
-                            local inv = getPlayerInventoryText(p)
-                            if inv then
-                                d.inv.Text = "INV:\n" .. inv
-                                d.inv.Position = Vector2.new(ps.X, y + sy + 22)
+                        local invVisible = State.EspInv
+                        local iconsVisible = State.EspInvIcons
+                        d.inv.Visible = invVisible
+                        local invY = y + sy + 22
+                        if invVisible then
+                            local items = getPlayerInventoryItems(p)
+                            if #items > 0 then
+                                local lines = {}
+                                for _, it in ipairs(items) do
+                                    table.insert(lines, (it.equipped and "[E] " or "• ") .. it.name)
+                                end
+                                d.inv.Text = "INV:\n" .. table.concat(lines, "\n")
+                                d.inv.Position = Vector2.new(ps.X + 30, invY)
                                 d.inv.Color = Colors.Accent
                             else
                                 d.inv.Text = "INV: пусто"
-                                d.inv.Position = Vector2.new(ps.X, y + sy + 22)
+                                d.inv.Position = Vector2.new(ps.X + 30, invY)
                                 d.inv.Color = Colors.SubText
+                            end
+                        end
+
+                        -- ITEM ICONS (справа от ников инвентаря)
+                        local icons = {d.icon1, d.icon2, d.icon3, d.icon4, d.icon5, d.icon6}
+                        for _, ic in ipairs(icons) do ic.Visible = false end
+                        if iconsVisible then
+                            local items = getPlayerInventoryItems(p)
+                            for idx, it in ipairs(items) do
+                                if idx > #icons then break end
+                                local ic = icons[idx]
+                                local icon = getItemIcon(it.name)
+                                if icon then
+                                    ic.Image = icon
+                                    ic.Position = Vector2.new(ps.X + 8, invY + 6 + (idx - 1) * 18)
+                                    ic.Visible = true
+                                end
                             end
                         end
 
@@ -1365,7 +1171,7 @@ if hasDrawing then
                             d.tracer.To   = Vector2.new(ps.X, ps.Y)
                         end
 
-                        -- HEAD CIRCLE
+                        -- HEAD
                         d.head.Visible = State.EspHead
                         if State.EspHead and head then
                             local hps, hon = Camera:WorldToViewportPoint(head.Position)
@@ -1378,7 +1184,7 @@ if hasDrawing then
                             end
                         end
 
-                        -- SKELETON (упрощённый)
+                        -- SKELETON
                         local skelVisible = State.EspSkeleton
                         d.bone1.Visible, d.bone2.Visible, d.bone3.Visible, d.bone4.Visible =
                             skelVisible, skelVisible, skelVisible, skelVisible
@@ -1387,8 +1193,8 @@ if hasDrawing then
                             local rarm = c:FindFirstChild("Right Arm") or c:FindFirstChild("RightHand")
                             local lleg = c:FindFirstChild("Left Leg") or c:FindFirstChild("LeftFoot")
                             local rleg = c:FindFirstChild("Right Leg") or c:FindFirstChild("RightFoot")
-                            local color = Colors.Accent
-                            d.bone1.Color, d.bone2.Color, d.bone3.Color, d.bone4.Color = color, color, color, color
+                            local clr = Colors.Accent
+                            d.bone1.Color, d.bone2.Color, d.bone3.Color, d.bone4.Color = clr, clr, clr, clr
                             local function to2d(part)
                                 if not part then return nil end
                                 local sp, on2 = Camera:WorldToViewportPoint(part.Position)
@@ -1410,6 +1216,7 @@ if hasDrawing then
                     d.name.Visible, d.dist.Visible, d.inv.Visible = false, false, false
                     d.tracer.Visible, d.head.Visible = false, false
                     d.bone1.Visible, d.bone2.Visible, d.bone3.Visible, d.bone4.Visible = false, false, false, false
+                    d.icon1.Visible, d.icon2.Visible, d.icon3.Visible, d.icon4.Visible, d.icon5.Visible, d.icon6.Visible = false, false, false, false, false, false
                 end
             end
         end)
@@ -1425,6 +1232,7 @@ if hasDrawing then
                 d.name:Remove(); d.dist:Remove(); d.inv:Remove()
                 d.tracer:Remove(); d.head:Remove()
                 d.bone1:Remove(); d.bone2:Remove(); d.bone3:Remove(); d.bone4:Remove()
+                d.icon1:Remove(); d.icon2:Remove(); d.icon3:Remove(); d.icon4:Remove(); d.icon5:Remove(); d.icon6:Remove()
             end)
             espElements[p] = nil
         end
@@ -1450,9 +1258,6 @@ UserInputService.InputBegan:Connect(function(input, processed)
     if input.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
 end)
 
--- ============================================================
---  СТАРТОВАЯ ВКЛАДКА
--- ============================================================
 showTab("VISUALS")
 
 -- ============================================================
@@ -1464,9 +1269,7 @@ task.spawn(function()
 end)
 
 local WM = new("ScreenGui", {
-    Name = "NyzeRustWM",
-    ResetOnSpawn = false,
-    IgnoreGuiInset = true
+    Name = "NyzeRustWM", ResetOnSpawn = false, IgnoreGuiInset = true
 }, SG)
 pcall(function() WM.Parent = CoreGui end)
 if not WM.Parent then WM.Parent = LocalPlayer:WaitForChild("PlayerGui") end
@@ -1478,29 +1281,20 @@ local WFrame = new("Frame", {
     Size = UDim2.new(0, 240, 0, 130),
     BorderSizePixel = 0
 }, WM)
-_G.WFrame = WFrame
 corner(WFrame, 4)
-
-local WStroke = stroke(WFrame, Colors.Main, 1.5, 0.2)
-_G.WStroke = WStroke
-
--- пиксель-полоска сверху watermark
-pixelFrame(WFrame, Colors.Main, UDim2.new(1, 0, 0, 3), UDim2.new(0, 0, 0, 0), 5)
+stroke(WFrame, Colors.Main, 1.5, 0.2)
+pixelFrame(WFrame, Colors.Main, UDim2.new(1, 0, 0, 2), UDim2.new(0, 0, 0, 0), 5)
 
 local WLabel = new("TextLabel", {
     Size = UDim2.new(1, -20, 1, -16),
     Position = UDim2.new(0, 12, 0, 8),
-    BackgroundTransparency = 1,
-    TextColor3 = Colors.Text,
-    Font = Enum.Font.Code,
-    TextSize = 12,
-    RichText = true,
+    BackgroundTransparency = 1, TextColor3 = Colors.Text,
+    Font = Enum.Font.Code, TextSize = 12, RichText = true,
     TextXAlignment = Enum.TextXAlignment.Left,
     TextYAlignment = Enum.TextYAlignment.Top
 }, WFrame)
 
 local lastT = tick(); local frames = 0; local fps = 0
-
 RunService.RenderStepped:Connect(function()
     pcall(function()
         frames = frames + 1
@@ -1508,7 +1302,7 @@ RunService.RenderStepped:Connect(function()
         local ping = 0
         pcall(function() ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
 
-        local txt = "<font color='#" .. Colors.Main:ToHex() .. "'>NyzeRust</font> v2.0\n"
+        local txt = "<font color='#" .. Colors.Main:ToHex() .. "'>NyzeRust</font> v3.0\n"
         txt = txt .. t("online") .. ": <font color='#" .. Colors.Accent:ToHex() .. "'>" .. onlineUsers .. "</font>\n"
         txt = txt .. t("fps") .. ": <font color='#" .. Colors.Accent:ToHex() .. "'>" .. fps ..
               "</font>  |  " .. t("ping") .. ": <font color='#" .. Colors.Accent:ToHex() .. "'>" .. ping .. "ms</font>\n"
@@ -1519,9 +1313,8 @@ RunService.RenderStepped:Connect(function()
         for prop, key in pairs(_G.NyzeBinds) do
             if key then
                 bindCount = bindCount + 1
-                local on = State[prop]
-                local stat = on and "<font color='#22DD66'>ON</font>"
-                            or  "<font color='#DD4466'>OFF</font>"
+                local stat = State[prop] and "<font color='#22DD66'>ON</font>"
+                            or "<font color='#DD4466'>OFF</font>"
                 txt = txt .. "• " .. prop .. " [" .. key.Name .. "] " .. stat .. "\n"
             end
         end
@@ -1537,10 +1330,10 @@ end)
 -- ============================================================
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v2.0",
+        Title = "NyzeRust v3.0",
         Text = LANG == "RU" and "Загружено • RSHIFT чтобы открыть" or "Loaded • RSHIFT to open",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v2.0] Загружен. Нажми RSHIFT чтобы открыть меню.")
+print("[NyzeRust v3.0] Загружен. Нажми RSHIFT чтобы открыть меню.")
