@@ -1,6 +1,6 @@
 --[[
-    NyzeRust v3.2 — "Pure Black" Edition
-    Pure Black UI • Watermark Capsule (RichText Fixed) • Flat List
+    NyzeRust v3.3 — "Pure Black" Edition
+    Pure Black UI • Watermark Capsule (No RichText) • Flat List
     X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot
 --]]
 
@@ -96,10 +96,6 @@ local function new(class, props, parent)
     for k, v in pairs(props or {}) do
         pcall(function() o[k] = v end)
     end
-    -- RichText применяем в самом конце
-    if props and props.RichText ~= nil then
-        pcall(function() o.RichText = props.RichText end)
-    end
     return o
 end
 
@@ -128,19 +124,6 @@ local function pixelFrame(parent, color, size, pos, zindex)
         BackgroundColor3 = color, BorderSizePixel = 0,
         Size = size, Position = pos or UDim2.new(), ZIndex = zindex or 1
     }, parent)
-end
-
--- Создание RichText-лейбла с гарантией
-local function richLabel(parent, props)
-    local o = Instance.new("TextLabel")
-    o.Parent = parent
-    for k, v in pairs(props or {}) do
-        if k ~= "RichText" then
-            pcall(function() o[k] = v end)
-        end
-    end
-    pcall(function() o.RichText = true end)
-    return o
 end
 
 -- ============================================================
@@ -260,7 +243,7 @@ new("TextLabel", {
 new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
     Position = UDim2.new(0, 72, 0, 34),
-    BackgroundTransparency = 1, Text = "Pure Black • v3.2  •  RSHIFT",
+    BackgroundTransparency = 1, Text = "Pure Black • v3.3  •  RSHIFT",
     TextColor3 = Colors.SubText, Font = Enum.Font.Code,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
@@ -361,7 +344,7 @@ local function createToggle(label, prop, order)
     b.MouseButton1Click:Connect(function()
         toggleFeature(prop, b, status)
         local marker = b:FindFirstChildOfClass("Frame")
-        if marker then
+        if marker and marker ~= status then
             TweenService:Create(marker, TweenInfo.new(0.15), {
                 BackgroundColor3 = State[prop] and Colors.Accent or Colors.Stroke
             }):Play()
@@ -553,7 +536,7 @@ if isMobile then
 end
 
 -- ============================================================
---  WATERMARK (капсула по центру сверху)
+--  WATERMARK (капсула сверху — БЕЗ RichText, через отдельные TextLabel)
 -- ============================================================
 local WM = Instance.new("ScreenGui")
 WM.Name = "NyzeRustWM"
@@ -572,18 +555,46 @@ WFrame.Parent = WM
 corner(WFrame, 15)
 stroke(WFrame, Colors.Accent, 1, 0.5)
 
--- RichText-лейбл — свойства присваиваем по одному, RichText в самом конце
-local WLabel = Instance.new("TextLabel")
-WLabel.Size = UDim2.new(1, -20, 1, 0)
-WLabel.Position = UDim2.new(0, 10, 0, 0)
-WLabel.BackgroundTransparency = 1
-WLabel.TextColor3 = Colors.Text
-WLabel.Font = Enum.Font.Code
-WLabel.TextSize = 12
-WLabel.TextXAlignment = Enum.TextXAlignment.Center
-WLabel.TextYAlignment = Enum.TextYAlignment.Center
-WLabel.Parent = WFrame
-WLabel.RichText = true
+-- Контейнер с горизонтальным списком
+local WRow = Instance.new("Frame")
+WRow.Size = UDim2.new(1, -20, 1, 0)
+WRow.Position = UDim2.new(0, 10, 0, 0)
+WRow.BackgroundTransparency = 1
+WRow.Parent = WFrame
+
+local WLayout = Instance.new("UIListLayout")
+WLayout.FillDirection = Enum.FillDirection.Horizontal
+WLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+WLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+WLayout.Padding = UDim.new(0, 6)
+WLayout.SortOrder = Enum.SortOrder.LayoutOrder
+WLayout.Parent = WRow
+
+local function makeSeg(text, color, order)
+    local l = Instance.new("TextLabel")
+    l.BackgroundTransparency = 1
+    l.AutomaticSize = Enum.AutomaticSize.X
+    l.Size = UDim2.new(0, 0, 1, 0)
+    l.Font = Enum.Font.Code
+    l.TextSize = 12
+    l.TextColor3 = color
+    l.Text = text
+    l.LayoutOrder = order
+    l.Parent = WRow
+    return l
+end
+
+local segBrand   = makeSeg("NyzeRust", Colors.Accent, 1)
+local segVer     = makeSeg("v3.3", Colors.SubText, 2)
+local segSep1    = makeSeg("|", Colors.Stroke, 3)
+local segFpsLbl  = makeSeg("FPS:", Colors.SubText, 4)
+local segFpsVal  = makeSeg("0", Colors.Accent, 5)
+local segSep2    = makeSeg("|", Colors.Stroke, 6)
+local segPingLbl = makeSeg("PING:", Colors.SubText, 7)
+local segPingVal = makeSeg("0ms", Colors.Accent, 8)
+local segSep3    = makeSeg("|", Colors.Stroke, 9)
+local segMenuLbl = makeSeg("MENU:", Colors.SubText, 10)
+local segMenuVal = makeSeg("RSHIFT", Colors.Accent, 11)
 
 local lastT = tick(); local frames = 0; local fps = 0
 
@@ -594,21 +605,8 @@ RunService.RenderStepped:Connect(function()
         local ping = 0
         pcall(function() ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
 
-        local accentHex = Colors.Accent:ToHex()
-        local subHex    = Colors.SubText:ToHex()
-        local strokeHex = Colors.Stroke:ToHex()
-
-        local txt = ""
-        txt = txt .. "<font color='#" .. accentHex .. "'>NyzeRust</font>"
-        txt = txt .. " <font color='#" .. subHex .. "'>v3.2</font>"
-        txt = txt .. "   <font color='#" .. strokeHex .. "'>|</font>   "
-        txt = txt .. "FPS: <font color='#" .. accentHex .. "'>" .. fps .. "</font>"
-        txt = txt .. "   <font color='#" .. strokeHex .. "'>|</font>   "
-        txt = txt .. "PING: <font color='#" .. accentHex .. "'>" .. ping .. "ms</font>"
-        txt = txt .. "   <font color='#" .. strokeHex .. "'>|</font>   "
-        txt = txt .. "MENU: <font color='#" .. accentHex .. "'>RSHIFT</font>"
-
-        WLabel.Text = txt
+        segFpsVal.Text  = tostring(fps)
+        segPingVal.Text = ping .. "ms"
     end)
 end)
 
@@ -1306,10 +1304,10 @@ end)
 -- ============================================================
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.2",
+        Title = "NyzeRust v3.3",
         Text = "Pure Black • RSHIFT",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v3.2] Загружен. RSHIFT для открытия.")
+print("[NyzeRust v3.3] Загружен. RSHIFT для открытия.")
