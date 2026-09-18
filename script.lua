@@ -1,6 +1,7 @@
 --[[
-    NyzeRust v3.1 — "Pure Black" Edition
-    Pure Black UI • Watermark Capsule • Flat List • X-Ray • Lock Auto-Code
+    NyzeRust v3.2 — "Pure Black" Edition
+    Pure Black UI • Watermark Capsule (RichText Fixed) • Flat List
+    X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot
 --]]
 
 -- ============================================================
@@ -31,10 +32,10 @@ end)
 --  ЕДИНАЯ ЧЁРНАЯ ТЕМА
 -- ============================================================
 local Colors = {
-    Main         = Color3.fromRGB(200, 200, 200),   -- светло-серый акцент
+    Main         = Color3.fromRGB(200, 200, 200),
     Secondary    = Color3.fromRGB(120, 120, 120),
     Accent       = Color3.fromRGB(255, 255, 255),
-    Background   = Color3.fromRGB(0, 0, 0),          -- чистый чёрный
+    Background   = Color3.fromRGB(0, 0, 0),
     Panel        = Color3.fromRGB(8, 8, 8),
     SidePanel    = Color3.fromRGB(4, 4, 4),
     Element      = Color3.fromRGB(18, 18, 18),
@@ -50,21 +51,21 @@ local Colors = {
 --  СОСТОЯНИЕ
 -- ============================================================
 local State = {
-    EspBoxes       = false, EspNames = false, EspDist = false,
-    EspHP          = false, EspHPNum = false, EspInv = false,
-    EspInvIcons    = false, EspTracers = false, EspSkeleton = false,
-    EspHead        = false,
+    EspBoxes = false, EspNames = false, EspDist = false,
+    EspHP = false, EspHPNum = false, EspInv = false,
+    EspInvIcons = false, EspTracers = false, EspSkeleton = false,
+    EspHead = false,
     PlayerEspMaxDist = 800,
-    AimEnabled     = false, TeamCheck = false, WallCheck = true,
-    AimSmooth      = 0.15, AimFOV = 120, NoBulletDrop = false,
-    AutoShoot      = false, AutoShootDelay = 0.08,
-    LegitSpeed     = false, SpeedMultiplier = 1.5,
-    InfJump        = false, FreecamEnabled = false, FreecamSpeed = 1,
-    FullBright     = false, SulfurEsp = false, IronEsp = false,
-    StoneEsp       = false, NpcEsp = false, CrateEsp = false,
-    OreEspMaxDist  = 400, NpcEspMaxDist = 600, CrateEspMaxDist = 500,
-    XRay           = false,
-    LockAutoCode   = false,
+    AimEnabled = false, TeamCheck = false, WallCheck = true,
+    AimSmooth = 0.15, AimFOV = 120, NoBulletDrop = false,
+    AutoShoot = false, AutoShootDelay = 0.08,
+    LegitSpeed = false, SpeedMultiplier = 1.5,
+    InfJump = false, FreecamEnabled = false, FreecamSpeed = 1,
+    FullBright = false, SulfurEsp = false, IronEsp = false,
+    StoneEsp = false, NpcEsp = false, CrateEsp = false,
+    OreEspMaxDist = 400, NpcEspMaxDist = 600, CrateEspMaxDist = 500,
+    XRay = false,
+    LockAutoCode = false,
 }
 _G.NyzeState = State
 _G.NyzeBinds = {}
@@ -91,19 +92,29 @@ if not SG.Parent then SG.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 -- ============================================================
 local function new(class, props, parent)
     local o = Instance.new(class)
-    for k, v in pairs(props or {}) do o[k] = v end
     if parent then o.Parent = parent end
+    for k, v in pairs(props or {}) do
+        pcall(function() o[k] = v end)
+    end
+    -- RichText применяем в самом конце
+    if props and props.RichText ~= nil then
+        pcall(function() o.RichText = props.RichText end)
+    end
     return o
 end
+
 local function corner(parent, r)
     return new("UICorner", {CornerRadius = UDim.new(0, r or 4)}, parent)
 end
+
 local function stroke(parent, color, thick, trans)
     return new("UIStroke", {
         Color = color or Colors.Stroke, Thickness = thick or 1,
-        Transparency = trans or 0, ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        Transparency = trans or 0,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     }, parent)
 end
+
 local function padding(parent, px, py)
     local p = new("UIPadding", {}, parent)
     local ux, uy = UDim.new(0, px or 0), UDim.new(0, py or px or 0)
@@ -111,11 +122,25 @@ local function padding(parent, px, py)
     p.PaddingTop, p.PaddingBottom = uy, uy
     return p
 end
+
 local function pixelFrame(parent, color, size, pos, zindex)
     return new("Frame", {
         BackgroundColor3 = color, BorderSizePixel = 0,
         Size = size, Position = pos or UDim2.new(), ZIndex = zindex or 1
     }, parent)
+end
+
+-- Создание RichText-лейбла с гарантией
+local function richLabel(parent, props)
+    local o = Instance.new("TextLabel")
+    o.Parent = parent
+    for k, v in pairs(props or {}) do
+        if k ~= "RichText" then
+            pcall(function() o[k] = v end)
+        end
+    end
+    pcall(function() o.RichText = true end)
+    return o
 end
 
 -- ============================================================
@@ -139,6 +164,7 @@ local function refreshToggleUI(prop, button, statusFrame)
         end
     end)
 end
+
 local function toggleFeature(prop, button, statusFrame)
     State[prop] = not State[prop]
     refreshToggleUI(prop, button, statusFrame)
@@ -201,7 +227,6 @@ end
 corner(M, 8)
 local MainStroke = stroke(M, Colors.Main, 1.5, 0.4)
 
--- Чёрная полоса сверху
 pixelFrame(M, Colors.Main, UDim2.new(1, 0, 0, 2), UDim2.new(0, 0, 0, 0), 5)
 
 -- ============================================================
@@ -235,7 +260,7 @@ new("TextLabel", {
 new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
     Position = UDim2.new(0, 72, 0, 34),
-    BackgroundTransparency = 1, Text = "Pure Black • v3.1  •  RSHIFT",
+    BackgroundTransparency = 1, Text = "Pure Black • v3.2  •  RSHIFT",
     TextColor3 = Colors.SubText, Font = Enum.Font.Code,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
@@ -257,7 +282,7 @@ CloseBtn.MouseLeave:Connect(function()
 end)
 
 -- ============================================================
---  CONTAINER (все функции одним списком)
+--  CONTAINER
 -- ============================================================
 local Container = new("ScrollingFrame", {
     Position = UDim2.new(0, 12, 0, 68),
@@ -279,7 +304,7 @@ new("UIListLayout", {
 }, Container)
 
 -- ============================================================
---  UI ФУНКЦИИ (без вкладок, всё в одном списке)
+--  UI ФУНКЦИИ
 -- ============================================================
 local function createCategory(title, order)
     local f = new("Frame", {
@@ -324,6 +349,7 @@ local function createToggle(label, prop, order)
         BorderSizePixel = 0
     }, b)
     corner(status, 3)
+
     local knob = new("Frame", {
         Name = "Knob", Size = UDim2.new(0, 14, 0, 14),
         Position = State[prop] and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
@@ -332,7 +358,15 @@ local function createToggle(label, prop, order)
     }, status)
     corner(knob, 2)
 
-    b.MouseButton1Click:Connect(function() toggleFeature(prop, b, status) end)
+    b.MouseButton1Click:Connect(function()
+        toggleFeature(prop, b, status)
+        local marker = b:FindFirstChildOfClass("Frame")
+        if marker then
+            TweenService:Create(marker, TweenInfo.new(0.15), {
+                BackgroundColor3 = State[prop] and Colors.Accent or Colors.Stroke
+            }):Play()
+        end
+    end)
     b.MouseEnter:Connect(function()
         if not State[prop] then
             TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
@@ -362,6 +396,7 @@ local function createSlider(label, prop, min, max, order)
         TextColor3 = Colors.Text, Font = Enum.Font.Code,
         TextSize = 12, TextXAlignment = Enum.TextXAlignment.Left
     }, f)
+
     local valLbl = new("TextLabel", {
         Size = UDim2.new(0, 90, 0, 18),
         Position = UDim2.new(1, -104, 0, 8),
@@ -377,6 +412,7 @@ local function createSlider(label, prop, min, max, order)
         BorderSizePixel = 0
     }, f)
     corner(barBg, 2)
+
     local fill = new("Frame", {
         Size = UDim2.new((State[prop] - min) / (max - min), 0, 1, 0),
         BackgroundColor3 = Colors.Accent, BorderSizePixel = 0
@@ -418,12 +454,11 @@ local function createSlider(label, prop, min, max, order)
 end
 
 -- ============================================================
---  НАПОЛНЕНИЕ (единый список)
+--  НАПОЛНЕНИЕ
 -- ============================================================
 local O = 0
 local function nextO() O = O + 1; return O end
 
--- ESP
 createCategory("ESP ИГРОКОВ", nextO())
 createToggle("Рамки игроков",      "EspBoxes",   nextO())
 createToggle("Ники",               "EspNames",   nextO())
@@ -437,7 +472,6 @@ createToggle("Скелет",             "EspSkeleton",nextO())
 createToggle("Кружок головы",      "EspHead",    nextO())
 createSlider("Макс. дистанция",    "PlayerEspMaxDist", 100, 5000, nextO())
 
--- AIM
 createCategory("АИМБОТ", nextO())
 createToggle("Включить Аимбот",    "AimEnabled",  nextO())
 createToggle("Проверка команды",   "TeamCheck",   nextO())
@@ -448,7 +482,6 @@ createSlider("Задержка выстрела",  "AutoShootDelay", 0.01, 0.5, 
 createSlider("Плавность",          "AimSmooth",   0.01, 1, nextO())
 createSlider("Радиус FOV",         "AimFOV",      20, 800, nextO())
 
--- PLAYER
 createCategory("ИГРОК", nextO())
 createToggle("Скорость",           "LegitSpeed",     nextO())
 createSlider("Множитель скорости", "SpeedMultiplier", 1, 5, nextO())
@@ -456,12 +489,10 @@ createToggle("Бесконечный прыжок", "InfJump",        nextO())
 createToggle("Свободная камера",   "FreecamEnabled", nextO())
 createSlider("Скорость полёта",    "FreecamSpeed",   0.1, 10, nextO())
 
--- VISUALS
 createCategory("ВИЗУАЛ", nextO())
 createToggle("X-Ray",              "XRay",       nextO())
 createToggle("Полное освещение",   "FullBright", nextO())
 
--- WORLD
 createCategory("МИР", nextO())
 createToggle("Сера",     "SulfurEsp", nextO())
 createToggle("Железо",   "IronEsp",   nextO())
@@ -472,7 +503,6 @@ createSlider("Дистанция руды",      "OreEspMaxDist",   50, 3000, ne
 createSlider("Дистанция NPC",       "NpcEspMaxDist",   50, 3000, nextO())
 createSlider("Дистанция ящиков",    "CrateEspMaxDist", 50, 3000, nextO())
 
--- MISC
 createCategory("РАЗНОЕ", nextO())
 createToggle("Автоввод кода на замках", "LockAutoCode", nextO())
 
@@ -523,36 +553,40 @@ if isMobile then
 end
 
 -- ============================================================
---  WATERMARK (длинная капсула по центру сверху)
+--  WATERMARK (капсула по центру сверху)
 -- ============================================================
-local WM = new("ScreenGui", {
-    Name = "NyzeRustWM", ResetOnSpawn = false, IgnoreGuiInset = true
-}, SG)
+local WM = Instance.new("ScreenGui")
+WM.Name = "NyzeRustWM"
+WM.ResetOnSpawn = false
+WM.IgnoreGuiInset = true
 pcall(function() WM.Parent = CoreGui end)
 if not WM.Parent then WM.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-local WFrame = new("Frame", {
-    BackgroundColor3 = Colors.Background,
-    BackgroundTransparency = 0.05,
-    Position = UDim2.new(0.5, -250, 0, 8),
-    Size = UDim2.new(0, 500, 0, 30),
-    BorderSizePixel = 0
-}, WM)
+local WFrame = Instance.new("Frame")
+WFrame.BackgroundColor3 = Colors.Background
+WFrame.BackgroundTransparency = 0.05
+WFrame.Position = UDim2.new(0.5, -250, 0, 8)
+WFrame.Size = UDim2.new(0, 500, 0, 30)
+WFrame.BorderSizePixel = 0
+WFrame.Parent = WM
 corner(WFrame, 15)
 stroke(WFrame, Colors.Accent, 1, 0.5)
-pixelFrame(WFrame, Colors.Accent, UDim2.new(1, 0, 0, 1), UDim2.new(0, 0, 0, 0), 5)
 
-local WLabel = new("TextLabel", {
-    Size = UDim2.new(1, -20, 1, 0),
-    Position = UDim2.new(0, 10, 0, 0),
-    BackgroundTransparency = 1,
-    TextColor3 = Colors.Text, Font = Enum.Font.Code,
-    TextSize = 12, RichText = true,
-    TextXAlignment = Enum.TextXAlignment.Center,
-    TextYAlignment = Enum.TextYAlignment.Center
-}, WFrame)
+-- RichText-лейбл — свойства присваиваем по одному, RichText в самом конце
+local WLabel = Instance.new("TextLabel")
+WLabel.Size = UDim2.new(1, -20, 1, 0)
+WLabel.Position = UDim2.new(0, 10, 0, 0)
+WLabel.BackgroundTransparency = 1
+WLabel.TextColor3 = Colors.Text
+WLabel.Font = Enum.Font.Code
+WLabel.TextSize = 12
+WLabel.TextXAlignment = Enum.TextXAlignment.Center
+WLabel.TextYAlignment = Enum.TextYAlignment.Center
+WLabel.Parent = WFrame
+WLabel.RichText = true
 
 local lastT = tick(); local frames = 0; local fps = 0
+
 RunService.RenderStepped:Connect(function()
     pcall(function()
         frames = frames + 1
@@ -560,13 +594,20 @@ RunService.RenderStepped:Connect(function()
         local ping = 0
         pcall(function() ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
 
-        local txt = "<font color='#" .. Colors.Accent:ToHex() .. "'>NyzeRust</font> <font color='#" .. Colors.SubText:ToHex() .. "'>v3.1</font>"
-        txt = txt .. "   <font color='" .. Colors.Stroke:ToHex() .. "'>|</font>   "
-        txt = txt .. "FPS: <font color='" .. Colors.Accent:ToHex() .. "'>" .. fps .. "</font>"
-        txt = txt .. "   <font color='" .. Colors.Stroke:ToHex() .. "'>|</font>   "
-        txt = txt .. "PING: <font color='" .. Colors.Accent:ToHex() .. "'>" .. ping .. "ms</font>"
-        txt = txt .. "   <font color='" .. Colors.Stroke:ToHex() .. "'>|</font>   "
-        txt = txt .. "MENU: <font color='" .. Colors.Accent:ToHex() .. "'>RSHIFT</font>"
+        local accentHex = Colors.Accent:ToHex()
+        local subHex    = Colors.SubText:ToHex()
+        local strokeHex = Colors.Stroke:ToHex()
+
+        local txt = ""
+        txt = txt .. "<font color='#" .. accentHex .. "'>NyzeRust</font>"
+        txt = txt .. " <font color='#" .. subHex .. "'>v3.2</font>"
+        txt = txt .. "   <font color='#" .. strokeHex .. "'>|</font>   "
+        txt = txt .. "FPS: <font color='#" .. accentHex .. "'>" .. fps .. "</font>"
+        txt = txt .. "   <font color='#" .. strokeHex .. "'>|</font>   "
+        txt = txt .. "PING: <font color='#" .. accentHex .. "'>" .. ping .. "ms</font>"
+        txt = txt .. "   <font color='#" .. strokeHex .. "'>|</font>   "
+        txt = txt .. "MENU: <font color='#" .. accentHex .. "'>RSHIFT</font>"
+
         WLabel.Text = txt
     end)
 end)
@@ -574,8 +615,6 @@ end)
 -- ============================================================
 --  GAME LOGIC
 -- ============================================================
-
--- AntiBulletDrop
 workspace.DescendantAdded:Connect(function(obj)
     if State.NoBulletDrop and obj:IsA("BasePart") and (obj.Name:find("Bullet") or obj.Name:find("Projectile")) then
         pcall(function()
@@ -586,7 +625,6 @@ workspace.DescendantAdded:Connect(function(obj)
     end
 end)
 
--- isVisible
 local function isVisible(targetPart, targetChar)
     if not State.WallCheck then return true end
     local char = LocalPlayer.Character
@@ -601,10 +639,9 @@ end
 -- ============================================================
 --  X-RAY
 -- ============================================================
-local xrayOriginals = {} -- [part] = {LocalTransparencyModifier = orig}
+local xrayOriginals = {}
 
 local function applyXRay()
-    -- Проходим по всем персонажам игроков и делаем их полупрозрачными
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
             for _, part in ipairs(p.Character:GetDescendants()) do
@@ -627,7 +664,8 @@ local function applyXRay()
                     if not xrayOriginals[part] then
                         xrayOriginals[part] = {transparency = part.Transparency}
                     end
-                    part.Transparency = State.XRay and 0.85 or (xrayOriginals[part] and xrayOriginals[part].transparency or 0)
+                    part.Transparency = State.XRay and 0.85
+                        or (xrayOriginals[part] and xrayOriginals[part].transparency or 0)
                 end
             end
         end
@@ -635,11 +673,8 @@ local function applyXRay()
 end
 
 -- ============================================================
---  LOCK AUTO-CODE (автоввод кода на замках)
+--  LOCK AUTO-CODE
 -- ============================================================
--- Ищем все объекты с именем содержащим "lock", "code", "keypad", "password"
--- и пытаемся взаимодействовать с ними автоматически
-
 local function isCodeLock(obj)
     local n = obj.Name:lower()
     return n:find("lock") or n:find("code") or n:find("keypad")
@@ -653,7 +688,8 @@ local function tryUnlockProximityPrompt(lockObj)
         if prompt then
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if root then
-                local dist = (root.Position - lockObj.Position).Magnitude
+                local pos = lockObj:IsA("Model") and lockObj:GetModelCFrame().Position or lockObj.Position
+                local dist = (root.Position - pos).Magnitude
                 if dist <= prompt.MaxActivationDistance then
                     fireproximityprompt(prompt)
                 end
@@ -668,7 +704,8 @@ local function tryUnlockClickDetector(lockObj)
         if cd then
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             if root then
-                local dist = (root.Position - lockObj.Position).Magnitude
+                local pos = lockObj:IsA("Model") and lockObj:GetModelCFrame().Position or lockObj.Position
+                local dist = (root.Position - pos).Magnitude
                 if dist <= cd.MaxActivationDistance then
                     fireclickdetector(cd)
                 end
@@ -679,23 +716,23 @@ end
 
 local function tryUnlockRemote(lockObj)
     pcall(function()
-        -- Ищем RemoteEvent/RemoteFunction с именами типа Unlock, SubmitCode, EnterCode
         local parent = lockObj.Parent or lockObj
         for _, d in ipairs(parent:GetDescendants()) do
             if d:IsA("RemoteEvent") or d:IsA("RemoteFunction") then
                 local n = d.Name:lower()
-                if n:find("unlock") or n:find("code") or n:find("submit") or n:find("enter") or n:find("open") then
-                    -- Пробуем разные варианты кода
-                    local codes = {"0000", "1234", "1111", "9999", "2000", "7777", "12345"}
+                if n:find("unlock") or n:find("code") or n:find("submit")
+                or n:find("enter") or n:find("open") or n:find("key") then
+                    local codes = {"0000", "1234", "1111", "9999", "2000", "7777", "12345", "00000"}
                     for _, code in ipairs(codes) do
                         if d:IsA("RemoteEvent") then
-                            d:FireServer(code)
-                            d:FireServer(tonumber(code))
+                            pcall(function() d:FireServer(code) end)
+                            pcall(function() d:FireServer(tonumber(code)) end)
                         else
                             pcall(function() d:InvokeServer(code) end)
                             pcall(function() d:InvokeServer(tonumber(code)) end)
                         end
-                    end                end
+                    end
+                end
             end
         end
     end)
@@ -924,6 +961,72 @@ local function tryAutoShoot(target)
 end
 
 -- ============================================================
+--  ИКОНКИ ПРЕДМЕТОВ
+-- ============================================================
+local IconCache = {}
+local IconLoading = {}
+
+local function getItemIcon(itemName)
+    if not itemName or itemName == "" then return nil end
+    if IconCache[itemName] ~= nil then
+        return IconCache[itemName] or nil
+    end
+    if IconLoading[itemName] then return nil end
+    IconLoading[itemName] = true
+
+    task.spawn(function()
+        local ok, icon = pcall(function()
+            local searchRoots = {
+                game:GetService("ReplicatedStorage"),
+                game:GetService("StarterPack"),
+                workspace
+            }
+            for _, root in ipairs(searchRoots) do
+                for _, obj in ipairs(root:GetDescendants()) do
+                    if obj:IsA("Tool") and obj.Name == itemName then
+                        if obj.TextureId and obj.TextureId ~= "" then
+                            return obj.TextureId
+                        end
+                        for _, d in ipairs(obj:GetDescendants()) do
+                            if d:IsA("Decal") or d:IsA("Texture") then return d.Texture end
+                            if d:IsA("ImageLabel") and d.Image ~= "" then return d.Image end
+                        end
+                    end
+                end
+            end
+            return nil
+        end)
+        if ok and icon and icon ~= "" then
+            IconCache[itemName] = icon
+        else
+            IconCache[itemName] = false
+        end
+        IconLoading[itemName] = nil
+    end)
+    return nil
+end
+
+local function getPlayerInventoryItems(p)
+    local items = {}
+    local bp = p:FindFirstChildOfClass("Backpack")
+    if bp then
+        for _, tool in ipairs(bp:GetChildren()) do
+            if tool:IsA("Tool") then
+                table.insert(items, {name = tool.Name, equipped = false, tool = tool})
+            end
+        end
+    end
+    if p.Character then
+        for _, tool in ipairs(p.Character:GetChildren()) do
+            if tool:IsA("Tool") then
+                table.insert(items, {name = tool.Name, equipped = true, tool = tool})
+            end
+        end
+    end
+    return items
+end
+
+-- ============================================================
 --  ESP (Drawing)
 -- ============================================================
 local espElements = {}
@@ -1070,7 +1173,6 @@ if hasDrawing then
                             d.dist.Color = Colors.SubText
                         end
 
-                        -- INV + ICONS
                         local invVisible = State.EspInv
                         local iconsVisible = State.EspInvIcons
                         d.inv.Visible = invVisible
@@ -1182,70 +1284,6 @@ if hasDrawing then
 end
 
 -- ============================================================
---  ИКОНКИ ПРЕДМЕТОВ
--- ============================================================
-local IconCache = {}
-local IconLoading = {}
-
-function getItemIcon(itemName)
-    if not itemName or itemName == "" then return nil end
-    if IconCache[itemName] then return IconCache[itemName] end
-    if IconLoading[itemName] then return nil end
-    IconLoading[itemName] = true
-
-    task.spawn(function()
-        local ok, icon = pcall(function()
-            local searchRoots = {
-                game:GetService("ReplicatedStorage"),
-                game:GetService("StarterPack"),
-                workspace
-            }
-            for _, root in ipairs(searchRoots) do
-                for _, obj in ipairs(root:GetDescendants()) do
-                    if obj:IsA("Tool") and obj.Name == itemName then
-                        if obj.TextureId and obj.TextureId ~= "" then
-                            return obj.TextureId
-                        end
-                        for _, d in ipairs(obj:GetDescendants()) do
-                            if d:IsA("Decal") or d:IsA("Texture") then return d.Texture end
-                            if d:IsA("ImageLabel") and d.Image ~= "" then return d.Image end
-                        end
-                    end
-                end
-            end
-            return nil
-        end)
-        if ok and icon and icon ~= "" then
-            IconCache[itemName] = icon
-        else
-            IconCache[itemName] = false
-        end
-        IconLoading[itemName] = nil
-    end)
-    return nil
-end
-
-function getPlayerInventoryItems(p)
-    local items = {}
-    local bp = p:FindFirstChildOfClass("Backpack")
-    if bp then
-        for _, tool in ipairs(bp:GetChildren()) do
-            if tool:IsA("Tool") then
-                table.insert(items, {name = tool.Name, equipped = false, tool = tool})
-            end
-        end
-    end
-    if p.Character then
-        for _, tool in ipairs(p.Character:GetChildren()) do
-            if tool:IsA("Tool") then
-                table.insert(items, {name = tool.Name, equipped = true, tool = tool})
-            end
-        end
-    end
-    return items
-end
-
--- ============================================================
 --  INFINITE JUMP
 -- ============================================================
 UserInputService.JumpRequest:Connect(function()
@@ -1268,10 +1306,10 @@ end)
 -- ============================================================
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.1",
+        Title = "NyzeRust v3.2",
         Text = "Pure Black • RSHIFT",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v3.1] Загружен. RSHIFT для открытия.")
+print("[NyzeRust v3.2] Загружен. RSHIFT для открытия.")
