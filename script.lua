@@ -1,7 +1,7 @@
 --[[
-    NyzeRust v3.3 — "Pure Black" Edition
-    Pure Black UI • Watermark Capsule (No RichText) • Flat List
-    X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot
+    NyzeRust v3.4 — "Pure Black" Edition + FPS Booster
+    Pure Black UI • Watermark Capsule • Flat List
+    X-Ray • Lock Auto-Code • Item Icons • Auto-Shoot • Оптимизация
 --]]
 
 -- ============================================================
@@ -66,6 +66,16 @@ local State = {
     OreEspMaxDist = 400, NpcEspMaxDist = 600, CrateEspMaxDist = 500,
     XRay = false,
     LockAutoCode = false,
+    -- Оптимизация
+    OptLowGFX      = false,
+    OptNoEffects   = false,
+    OptNoParticles = false,
+    OptNoDecals    = false,
+    OptNoShadows   = false,
+    OptFarParts    = false,
+    OptLowTerrain  = false,
+    OptNoSounds    = false,
+    OptRenderDist  = 1500,
 }
 _G.NyzeState = State
 _G.NyzeBinds = {}
@@ -243,7 +253,7 @@ new("TextLabel", {
 new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
     Position = UDim2.new(0, 72, 0, 34),
-    BackgroundTransparency = 1, Text = "Pure Black • v3.3  •  RSHIFT",
+    BackgroundTransparency = 1, Text = "Pure Black • v3.4  •  RSHIFT",
     TextColor3 = Colors.SubText, Font = Enum.Font.Code,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
@@ -489,6 +499,17 @@ createSlider("Дистанция ящиков",    "CrateEspMaxDist", 50, 3000, 
 createCategory("РАЗНОЕ", nextO())
 createToggle("Автоввод кода на замках", "LockAutoCode", nextO())
 
+createCategory("ОПТИМИЗАЦИЯ", nextO())
+createToggle("Low GFX (всё сразу)",    "OptLowGFX",       nextO())
+createToggle("Убрать эффекты",         "OptNoEffects",    nextO())
+createToggle("Убрать частицы",         "OptNoParticles",  nextO())
+createToggle("Убрать Decals/Textures", "OptNoDecals",     nextO())
+createToggle("Убрать тени",            "OptNoShadows",    nextO())
+createToggle("Убрать дальние объекты", "OptFarParts",     nextO())
+createToggle("Упростить террейн",      "OptLowTerrain",   nextO())
+createToggle("Убрать звуки",           "OptNoSounds",     nextO())
+createSlider("Дальность прорисовки",   "OptRenderDist",   100, 5000, nextO())
+
 -- ============================================================
 --  TOGGLE MENU
 -- ============================================================
@@ -536,7 +557,7 @@ if isMobile then
 end
 
 -- ============================================================
---  WATERMARK (капсула сверху — БЕЗ RichText, через отдельные TextLabel)
+--  WATERMARK (капсула сверху — БЕЗ RichText)
 -- ============================================================
 local WM = Instance.new("ScreenGui")
 WM.Name = "NyzeRustWM"
@@ -555,7 +576,6 @@ WFrame.Parent = WM
 corner(WFrame, 15)
 stroke(WFrame, Colors.Accent, 1, 0.5)
 
--- Контейнер с горизонтальным списком
 local WRow = Instance.new("Frame")
 WRow.Size = UDim2.new(1, -20, 1, 0)
 WRow.Position = UDim2.new(0, 10, 0, 0)
@@ -584,17 +604,17 @@ local function makeSeg(text, color, order)
     return l
 end
 
-local segBrand   = makeSeg("NyzeRust", Colors.Accent, 1)
-local segVer     = makeSeg("v3.3", Colors.SubText, 2)
-local segSep1    = makeSeg("|", Colors.Stroke, 3)
-local segFpsLbl  = makeSeg("FPS:", Colors.SubText, 4)
 local segFpsVal  = makeSeg("0", Colors.Accent, 5)
-local segSep2    = makeSeg("|", Colors.Stroke, 6)
-local segPingLbl = makeSeg("PING:", Colors.SubText, 7)
 local segPingVal = makeSeg("0ms", Colors.Accent, 8)
-local segSep3    = makeSeg("|", Colors.Stroke, 9)
-local segMenuLbl = makeSeg("MENU:", Colors.SubText, 10)
-local segMenuVal = makeSeg("RSHIFT", Colors.Accent, 11)
+local _ = makeSeg("NyzeRust", Colors.Accent, 1)
+makeSeg("v3.4", Colors.SubText, 2)
+makeSeg("|", Colors.Stroke, 3)
+makeSeg("FPS:", Colors.SubText, 4)
+makeSeg("|", Colors.Stroke, 6)
+makeSeg("PING:", Colors.SubText, 7)
+makeSeg("|", Colors.Stroke, 9)
+makeSeg("MENU:", Colors.SubText, 10)
+makeSeg("RSHIFT", Colors.Accent, 11)
 
 local lastT = tick(); local frames = 0; local fps = 0
 
@@ -854,6 +874,174 @@ local function applyOreVisuals(obj, name, color)
         end
     end
 end
+
+-- ============================================================
+--  ЛОГИКА ОПТИМИЗАЦИИ
+-- ============================================================
+local OptBackup = {
+    effects = {},
+    particles = {},
+    decals = {},
+    shadows = {},
+    parts = {},
+    sounds = {},
+}
+
+local function optRestoreAll()
+    for e, v in pairs(OptBackup.effects) do
+        pcall(function() if e and e.Parent then e.Enabled = v end end)
+    end
+    for p, v in pairs(OptBackup.particles) do
+        pcall(function() if p and p.Parent then p.Enabled = v end end)
+    end
+    for d, v in pairs(OptBackup.decals) do
+        pcall(function() if d and d.Parent then d.Transparency = v end end)
+    end
+    for s, v in pairs(OptBackup.shadows) do
+        pcall(function() if s and s.Parent then s.CastShadow = v end end)
+    end
+    for pt, v in pairs(OptBackup.parts) do
+        pcall(function() if pt and pt.Parent then pt.Transparency = v end end)
+    end
+    for sd, v in pairs(OptBackup.sounds) do
+        pcall(function() if sd and sd.Parent then sd.Volume = v end end)
+    end
+    OptBackup.effects = {}
+    OptBackup.particles = {}
+    OptBackup.decals = {}
+    OptBackup.shadows = {}
+    OptBackup.parts = {}
+    OptBackup.sounds = {}
+end
+
+local function optApplyEffects()
+    for _, e in ipairs(Lighting:GetChildren()) do
+        if e:IsA("PostEffect") or e:IsA("Atmosphere") or e:IsA("Sky") then
+            if OptBackup.effects[e] == nil then
+                OptBackup.effects[e] = e.Enabled
+                e.Enabled = false
+            end
+        end
+    end
+    pcall(function() Lighting.GlobalShadows = false end)
+    pcall(function() Lighting.FogEnd = 500 end)
+end
+
+local function optApplyParticles()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam")
+        or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles")
+        or obj:IsA("PointLight") or obj:IsA("SpotLight") then
+            if OptBackup.particles[obj] == nil then
+                OptBackup.particles[obj] = obj.Enabled
+                obj.Enabled = false
+            end
+        end
+    end
+end
+
+local function optApplyDecals()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Decal") or obj:IsA("Texture") then
+            if OptBackup.decals[obj] == nil then
+                OptBackup.decals[obj] = obj.Transparency
+                obj.Transparency = 1
+            end
+        end
+    end
+end
+
+local function optApplyShadows()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.CastShadow then
+            if OptBackup.shadows[obj] == nil then
+                OptBackup.shadows[obj] = obj.CastShadow
+                obj.CastShadow = false
+            end
+        end
+    end
+end
+
+local function optApplyFarParts()
+    local char = LocalPlayer.Character
+    local root = char and char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    local maxDist = State.OptRenderDist
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Transparency < 1 then
+            local dist = 0
+            pcall(function() dist = (root.Position - obj.Position).Magnitude end)
+            if dist > maxDist then
+                if OptBackup.parts[obj] == nil then
+                    OptBackup.parts[obj] = obj.Transparency
+                    obj.Transparency = 1
+                end
+            end
+        end
+    end
+end
+
+local function optApplyTerrain()
+    pcall(function()
+        local t = workspace.Terrain
+        t.WaterWaveSize = 0
+        t.WaterWaveSpeed = 0
+        t.WaterReflectance = 0
+        t.WaterTransparency = 1
+        t.Decoration = false
+    end)
+end
+
+local function optApplySounds()
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Sound") then
+            if OptBackup.sounds[obj] == nil then
+                OptBackup.sounds[obj] = obj.Volume
+                obj.Volume = 0
+            end
+        end
+    end
+end
+
+local function applyOptimizations()
+    local anyOn = State.OptLowGFX or State.OptNoEffects or State.OptNoParticles
+              or State.OptNoDecals or State.OptNoShadows or State.OptFarParts
+              or State.OptLowTerrain or State.OptNoSounds
+
+    if not anyOn then
+        optRestoreAll()
+        return
+    end
+
+    if State.OptNoEffects or State.OptLowGFX then optApplyEffects() end
+    if State.OptNoParticles or State.OptLowGFX then optApplyParticles() end
+    if State.OptNoDecals or State.OptLowGFX then optApplyDecals() end
+    if State.OptNoShadows or State.OptLowGFX then optApplyShadows() end
+    if State.OptFarParts or State.OptLowGFX then optApplyFarParts() end
+    if State.OptLowTerrain or State.OptLowGFX then optApplyTerrain() end
+    if State.OptNoSounds or State.OptLowGFX then optApplySounds() end
+    if State.OptLowGFX then
+        pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
+        pcall(function()
+            Lighting.GlobalShadows = false
+            Lighting.ShadowSoftness = 0
+        end)
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(2)
+        pcall(function()
+            if State.OptNoEffects or State.OptNoParticles or State.OptNoDecals
+            or State.OptNoShadows or State.OptFarParts or State.OptNoSounds
+            or State.OptLowGFX then
+                applyOptimizations()
+            end
+        end)
+    end
+end)
 
 -- ============================================================
 --  RENDER: мир
@@ -1304,10 +1492,10 @@ end)
 -- ============================================================
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.3",
-        Text = "Pure Black • RSHIFT",
+        Title = "NyzeRust v3.4",
+        Text = "Pure Black + FPS Booster • RSHIFT",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v3.3] Загружен. RSHIFT для открытия.")
+print("[NyzeRust v3.4] Загружен. RSHIFT для открытия.")
