@@ -5,10 +5,13 @@
     ██║╚██╗██║  ╚██╔╝   ███╔╝  ██╔══╝  ██╔══██╗██║   ██║╚════██║   ██║   
     ██║ ╚████║   ██║   ███████╗███████╗██║  ██║╚██████╔╝███████║   ██║   
     ╚═╝  ╚═══╝   ╚═╝   ╚══════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   
-                    NyzeRust v1.0 — Xeno Edition
+                 NyzeRust v2.0 — "Netherite" Edition
+                 Minecraft-Style UI • INV+HP ESP • RU/EN
 --]]
 
--- ============ СЕРВИСЫ ============
+-- ============================================================
+--  СЕРВИСЫ
+-- ============================================================
 local Players          = game:GetService("Players")
 local RunService       = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -16,158 +19,374 @@ local Lighting         = game:GetService("Lighting")
 local TweenService     = game:GetService("TweenService")
 local CoreGui          = game:GetService("CoreGui")
 local Stats            = game:GetService("Stats")
+local StarterGui       = game:GetService("StarterGui")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera
 local isMobile    = UserInputService.TouchEnabled
 
--- ============ ПРОВЕРКА DRAWING ============
+-- ============================================================
+--  ПРОВЕРКА DRAWING
+-- ============================================================
 local hasDrawing = pcall(function()
-    local t = Drawing.new("Line")
-    t:Remove()
-    return true
+    local t = Drawing.new("Line"); t:Remove(); return true
 end)
 
-if not hasDrawing then
-    warn("[NyzeRust] Твой Xeno не поддерживает Drawing. ESP работать не будет, но меню откроется.")
-end
+-- ============================================================
+--  ЛОКАЛИЗАЦИЯ
+-- ============================================================
+local LANG = "RU" -- "RU" или "EN"
 
--- ============ ТЕМЫ ============
-local Themes = {
-    NyzeDark = {
-        Main         = Color3.fromRGB(0, 170, 255),
-        Secondary    = Color3.fromRGB(120, 90, 255),
-        Accent       = Color3.fromRGB(0, 255, 200),
-        Background   = Color3.fromRGB(14, 15, 20),
-        Panel        = Color3.fromRGB(20, 22, 30),
-        SidePanel    = Color3.fromRGB(17, 18, 25),
-        Element      = Color3.fromRGB(28, 30, 40),
-        ElementHover = Color3.fromRGB(38, 41, 55),
-        Text         = Color3.fromRGB(235, 238, 245),
-        SubText      = Color3.fromRGB(140, 145, 160),
-        Stroke       = Color3.fromRGB(45, 48, 62)
+local Loc = {
+    RU = {
+        title = "NyzeRust",
+        subtitle = "Незерит • v2.0",
+        menu_hint = "МЕНЮ: RSHIFT",
+        online = "ОНЛАЙН",
+        fps = "FPS",
+        ping = "ПИНГ",
+        binds = "АКТИВНЫЕ БИНДЫ",
+        no_binds = "нет биндов",
+        bind_hint = "нажми [—] → задай клавишу",
+        -- вкладки
+        tab_visuals   = "ВИЗУАЛ",
+        tab_aim       = "АИМ",
+        tab_player    = "ИГРОК",
+        tab_world     = "МИР",
+        tab_settings  = "НАСТР",
+        -- категории
+        cat_esp       = "ESP ИГРОКОВ",
+        cat_chams     = "ПОДСВЕТКА",
+        cat_aim       = "АИМБОТ",
+        cat_misc      = "РАЗНОЕ",
+        cat_world     = "МИР",
+        cat_theme     = "ТЕМА",
+        -- ESP
+        esp_boxes     = "Рамки игроков",
+        esp_names     = "Ники",
+        esp_dist      = "Дистанция",
+        esp_hp        = "Полоса здоровья",
+        esp_hpnum     = "Число HP",
+        esp_inv       = "Инвентарь",
+        esp_tracers   = "Трассеры",
+        esp_skeleton  = "Скелет",
+        esp_head      = "Кружок на голове",
+        esp_maxdist   = "Макс. дистанция",
+        -- Aim
+        aim_enabled   = "Включить Аимбот",
+        aim_team      = "Проверка команды",
+        aim_wall      = "Проверка стен",
+        aim_smooth    = "Плавность",
+        aim_fov       = "Радиус FOV",
+        aim_visible   = "Только видимые",
+        aim_key       = "Клавиша аима",
+        aim_nodrop    = "Отключить падение пуль",
+        -- Player
+        ply_speed     = "Скорость",
+        ply_speedpow  = "Множитель скорости",
+        ply_infjump   = "Бесконечный прыжок",
+        ply_freecam   = "Свободная камера",
+        ply_flyspeed  = "Скорость полёта",
+        -- World
+        wld_fullbr    = "Полное освещение",
+        wld_sulfur    = "Сера",
+        wld_iron      = "Железо",
+        wld_stone     = "Камень",
+        wld_npc       = "NPC",
+        wld_crates    = "Ящики",
+        wld_ore_dist  = "Дистанция руды",
+        wld_npc_dist  = "Дистанция NPC",
+        wld_crate_dist= "Дистанция ящиков",
+        -- Settings
+        set_theme     = "Тема",
+        set_lang      = "Язык",
+        set_reset     = "Сброс настроек",
+        -- themes
+        theme_netherite = "Незерит",
+        theme_redstone  = "Редстоун",
+        theme_diamond   = "Алмаз",
+        theme_emerald   = "Изумруд",
     },
-    Carbon = {
-        Main         = Color3.fromRGB(230, 230, 235),
-        Secondary    = Color3.fromRGB(150, 150, 160),
-        Accent       = Color3.fromRGB(255, 90, 90),
-        Background   = Color3.fromRGB(10, 10, 12),
-        Panel        = Color3.fromRGB(18, 18, 22),
-        SidePanel    = Color3.fromRGB(14, 14, 18),
-        Element      = Color3.fromRGB(26, 26, 32),
-        ElementHover = Color3.fromRGB(36, 36, 44),
-        Text         = Color3.fromRGB(240, 240, 245),
-        SubText      = Color3.fromRGB(130, 130, 140),
-        Stroke       = Color3.fromRGB(42, 42, 50)
-    },
-    Violet = {
-        Main         = Color3.fromRGB(160, 100, 255),
-        Secondary    = Color3.fromRGB(90, 60, 200),
-        Accent       = Color3.fromRGB(255, 100, 200),
-        Background   = Color3.fromRGB(13, 10, 20),
-        Panel        = Color3.fromRGB(20, 16, 30),
-        SidePanel    = Color3.fromRGB(17, 13, 26),
-        Element      = Color3.fromRGB(30, 24, 44),
-        ElementHover = Color3.fromRGB(42, 34, 60),
-        Text         = Color3.fromRGB(238, 232, 250),
-        SubText      = Color3.fromRGB(150, 140, 175),
-        Stroke       = Color3.fromRGB(52, 42, 72)
+    EN = {
+        title = "NyzeRust",
+        subtitle = "Netherite • v2.0",
+        menu_hint = "MENU: RSHIFT",
+        online = "ONLINE",
+        fps = "FPS",
+        ping = "PING",
+        binds = "ACTIVE BINDS",
+        no_binds = "no binds",
+        bind_hint = "click [—] → press key",
+        tab_visuals   = "VISUALS",
+        tab_aim       = "AIM",
+        tab_player    = "PLAYER",
+        tab_world     = "WORLD",
+        tab_settings  = "SETTINGS",
+        cat_esp       = "PLAYER ESP",
+        cat_chams     = "HIGHLIGHT",
+        cat_aim       = "AIMBOT",
+        cat_misc      = "MISC",
+        cat_world     = "WORLD",
+        cat_theme     = "THEME",
+        esp_boxes     = "Player Boxes",
+        esp_names     = "Name Tags",
+        esp_dist      = "Distance",
+        esp_hp        = "Health Bar",
+        esp_hpnum     = "HP Number",
+        esp_inv       = "Inventory",
+        esp_tracers   = "Tracers",
+        esp_skeleton  = "Skeleton",
+        esp_head      = "Head Circle",
+        esp_maxdist   = "Max Distance",
+        aim_enabled   = "Enable Aimbot",
+        aim_team      = "Team Check",
+        aim_wall      = "Wall Check",
+        aim_smooth    = "Smoothing",
+        aim_fov       = "FOV Radius",
+        aim_visible   = "Visible Only",
+        aim_key       = "Aim Key",
+        aim_nodrop    = "No Bullet Drop",
+        ply_speed     = "Legit Speed",
+        ply_speedpow  = "Speed Multiplier",
+        ply_infjump   = "Infinite Jump",
+        ply_freecam   = "Freecam",
+        ply_flyspeed  = "Fly Speed",
+        wld_fullbr    = "Full Bright",
+        wld_sulfur    = "Sulfur Ore",
+        wld_iron      = "Iron Ore",
+        wld_stone     = "Stone Ore",
+        wld_npc       = "NPC",
+        wld_crates    = "Crates",
+        wld_ore_dist  = "Ore Distance",
+        wld_npc_dist  = "NPC Distance",
+        wld_crate_dist= "Crate Distance",
+        set_theme     = "Theme",
+        set_lang      = "Language",
+        set_reset     = "Reset Settings",
+        theme_netherite = "Netherite",
+        theme_redstone  = "Redstone",
+        theme_diamond   = "Diamond",
+        theme_emerald   = "Emerald",
     }
 }
 
-local Colors = Themes.NyzeDark
+local function t(key)
+    local l = Loc[LANG] or Loc.RU
+    return l[key] or key
+end
 
--- ============ СОСТОЯНИЕ ============
-_G.NyzeBinds        = {}
-_G.AimEnabled       = false
-_G.AimFOV           = 150
-_G.AimSmooth        = 0.1
-_G.WallCheck        = true
-_G.TeamCheck        = false
-_G.NoBulletDrop     = false
-_G.EspBoxes         = false
-_G.EspNames         = false
-_G.EspDist          = false
-_G.EspHP            = false
-_G.EspTracers       = false
-_G.PlayerEspMaxDist = 1000
-_G.FullBright       = false
-_G.FreecamEnabled   = false
-_G.FreecamSpeed     = 1
-_G.InfJump          = false
-_G.SulfurEsp        = false
-_G.IronEsp          = false
-_G.StoneEsp         = false
-_G.OreEspMaxDist    = 500
-_G.NpcEsp           = false
-_G.NpcEspMaxDist    = 1000
-_G.CrateEsp         = false
-_G.MilitaryEsp      = false
-_G.EliteEsp         = false
-_G.FoodEsp          = false
-_G.CrateEspMaxDist  = 1000
-_G.LegitSpeed       = false
-_G.SpeedMultiplier  = 1.5
+-- ============================================================
+--  ТЕМЫ MINECRAFT
+-- ============================================================
+local Themes = {
+    Netherite = {
+        Main        = Color3.fromRGB(120, 80, 200),   -- незеритовый фиолет
+        Secondary   = Color3.fromRGB(80, 50, 140),
+        Accent      = Color3.fromRGB(200, 160, 255),
+        Background  = Color3.fromRGB(18, 15, 24),
+        Panel       = Color3.fromRGB(26, 22, 34),
+        SidePanel   = Color3.fromRGB(22, 18, 30),
+        Element     = Color3.fromRGB(38, 32, 50),
+        ElementHover= Color3.fromRGB(52, 44, 68),
+        Text        = Color3.fromRGB(240, 235, 250),
+        SubText     = Color3.fromRGB(150, 140, 175),
+        Stroke      = Color3.fromRGB(60, 50, 85),
+        Success     = Color3.fromRGB(120, 220, 120),
+        Danger      = Color3.fromRGB(230, 80, 80)
+    },
+    Redstone = {
+        Main        = Color3.fromRGB(255, 60, 60),
+        Secondary   = Color3.fromRGB(160, 30, 30),
+        Accent      = Color3.fromRGB(255, 140, 100),
+        Background  = Color3.fromRGB(20, 12, 12),
+        Panel       = Color3.fromRGB(30, 18, 18),
+        SidePanel   = Color3.fromRGB(24, 14, 14),
+        Element     = Color3.fromRGB(44, 26, 26),
+        ElementHover= Color3.fromRGB(60, 36, 36),
+        Text        = Color3.fromRGB(255, 235, 230),
+        SubText     = Color3.fromRGB(180, 140, 140),
+        Stroke      = Color3.fromRGB(80, 40, 40),
+        Success     = Color3.fromRGB(120, 220, 120),
+        Danger      = Color3.fromRGB(255, 80, 80)
+    },
+    Diamond = {
+        Main        = Color3.fromRGB(80, 220, 230),
+        Secondary   = Color3.fromRGB(40, 150, 170),
+        Accent      = Color3.fromRGB(180, 250, 255),
+        Background  = Color3.fromRGB(12, 20, 24),
+        Panel       = Color3.fromRGB(18, 30, 34),
+        SidePanel   = Color3.fromRGB(14, 24, 28),
+        Element     = Color3.fromRGB(26, 44, 50),
+        ElementHover= Color3.fromRGB(38, 60, 68),
+        Text        = Color3.fromRGB(230, 250, 255),
+        SubText     = Color3.fromRGB(140, 180, 190),
+        Stroke      = Color3.fromRGB(40, 70, 80),
+        Success     = Color3.fromRGB(120, 220, 120),
+        Danger      = Color3.fromRGB(230, 80, 80)
+    },
+    Emerald = {
+        Main        = Color3.fromRGB(80, 220, 120),
+        Secondary   = Color3.fromRGB(40, 150, 80),
+        Accent      = Color3.fromRGB(180, 255, 200),
+        Background  = Color3.fromRGB(12, 22, 16),
+        Panel       = Color3.fromRGB(18, 32, 22),
+        SidePanel   = Color3.fromRGB(14, 26, 18),
+        Element     = Color3.fromRGB(26, 48, 34),
+        ElementHover= Color3.fromRGB(38, 66, 46),
+        Text        = Color3.fromRGB(230, 255, 235),
+        SubText     = Color3.fromRGB(140, 190, 155),
+        Stroke      = Color3.fromRGB(40, 80, 50),
+        Success     = Color3.fromRGB(120, 220, 120),
+        Danger      = Color3.fromRGB(230, 80, 80)
+    }
+}
 
--- ============ BLUR ============
+local Colors = Themes.Netherite
+
+-- ============================================================
+--  СОСТОЯНИЕ
+-- ============================================================
+local State = {
+    EspBoxes       = false,
+    EspNames       = false,
+    EspDist        = false,
+    EspHP          = false,
+    EspHPNum       = false,
+    EspInv         = false,
+    EspTracers     = false,
+    EspSkeleton    = false,
+    EspHead        = false,
+    PlayerEspMaxDist = 800,
+    AimEnabled     = false,
+    TeamCheck      = false,
+    WallCheck      = true,
+    AimSmooth      = 0.15,
+    AimFOV         = 120,
+    NoBulletDrop   = false,
+    LegitSpeed     = false,
+    SpeedMultiplier= 1.5,
+    InfJump        = false,
+    FreecamEnabled = false,
+    FreecamSpeed   = 1,
+    FullBright     = false,
+    SulfurEsp      = false,
+    IronEsp        = false,
+    StoneEsp       = false,
+    NpcEsp         = false,
+    CrateEsp       = false,
+    OreEspMaxDist  = 400,
+    NpcEspMaxDist  = 600,
+    CrateEspMaxDist= 500,
+}
+_G.NyzeState = State
+_G.NyzeBinds = {}
+
+-- ============================================================
+--  BLUR
+-- ============================================================
 local Blur = Instance.new("BlurEffect", Lighting)
 Blur.Size, Blur.Enabled = 0, true
 
--- ============ SCREEN GUI ============
+-- ============================================================
+--  SCREEN GUI
+-- ============================================================
 local SG = Instance.new("ScreenGui")
-SG.Name = "NyzeRust"
+SG.Name = "NyzeRust_" .. tostring(math.random(1000, 9999))
 SG.ResetOnSpawn = false
 SG.IgnoreGuiInset = true
 SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+pcall(function() SG.Parent = CoreGui end)
+if not SG.Parent then SG.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-local guiOk = pcall(function() SG.Parent = CoreGui end)
-if not guiOk or not SG.Parent then
-    SG.Parent = LocalPlayer:WaitForChild("PlayerGui")
+-- ============================================================
+--  ХЕЛПЕРЫ
+-- ============================================================
+local function new(class, props, parent)
+    local o = Instance.new(class)
+    for k, v in pairs(props or {}) do o[k] = v end
+    if parent then o.Parent = parent end
+    return o
 end
 
--- ============ ХЕЛПЕРЫ ============
 local function corner(parent, r)
-    local c = Instance.new("UICorner", parent)
-    c.CornerRadius = UDim.new(0, r or 8)
-    return c
+    return new("UICorner", {CornerRadius = UDim.new(0, r or 4)}, parent)
 end
 
 local function stroke(parent, color, thick, trans)
-    local s = Instance.new("UIStroke", parent)
-    s.Color = color or Colors.Stroke
-    s.Thickness = thick or 1
-    s.Transparency = trans or 0
-    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    return s
+    return new("UIStroke", {
+        Color = color or Colors.Stroke,
+        Thickness = thick or 1,
+        Transparency = trans or 0,
+        ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    }, parent)
 end
 
-local function padding(parent, px)
-    local p = Instance.new("UIPadding", parent)
-    local u = UDim.new(0, px)
-    p.PaddingTop, p.PaddingBottom, p.PaddingLeft, p.PaddingRight = u, u, u, u
+local function padding(parent, px, py)
+    local p = new("UIPadding", {}, parent)
+    local ux, uy = UDim.new(0, px or 0), UDim.new(0, py or px or 0)
+    p.PaddingLeft, p.PaddingRight = ux, ux
+    p.PaddingTop, p.PaddingBottom = uy, uy
     return p
 end
 
--- ============ ПЕРЕМЕННАЯ TOGGLE (объявлена заранее) ============
-local toggleFeature
+-- Minecraft-подобный "острый" угловой элемент
+local function pixelFrame(parent, color, size, pos, zindex)
+    return new("Frame", {
+        BackgroundColor3 = color,
+        BorderSizePixel = 0,
+        Size = size,
+        Position = pos or UDim2.new(),
+        ZIndex = zindex or 1
+    }, parent)
+end
 
--- ============ BIND BUTTON ============
+-- ============================================================
+--  TOGGLE LOGIC (с bindBtn)
+-- ============================================================
+local function refreshToggleUI(prop, button, statusFrame)
+    if not button or not statusFrame then return end
+    local on = State[prop]
+    pcall(function()
+        TweenService:Create(button, TweenInfo.new(0.15), {
+            BackgroundColor3 = on and Colors.ElementHover or Colors.Element
+        }):Play()
+        TweenService:Create(statusFrame, TweenInfo.new(0.15), {
+            BackgroundColor3 = on and Colors.Main or Color3.fromRGB(60, 60, 70)
+        }):Play()
+        local knob = statusFrame:FindFirstChild("Knob")
+        if knob then
+            TweenService:Create(knob, TweenInfo.new(0.15), {
+                Position = on and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+            }):Play()
+        end
+    end)
+end
+
+local function toggleFeature(prop, button, statusFrame)
+    State[prop] = not State[prop]
+    refreshToggleUI(prop, button, statusFrame)
+end
+
+-- ============================================================
+--  BIND BUTTON
+-- ============================================================
 local function createBindBtn(parent, prop, button, statusFrame)
-    local bindBtn = Instance.new("TextButton", parent)
-    bindBtn.Name = "Bind"
-    bindBtn.Size = UDim2.new(0, 60, 0, 22)
-    bindBtn.Position = UDim2.new(1, -108, 0.5, -11)
-    bindBtn.BackgroundColor3 = Colors.Element
-    bindBtn.Text = "—"
-    bindBtn.TextColor3 = Colors.SubText
-    bindBtn.Font = Enum.Font.GothamMedium
-    bindBtn.TextSize = 11
-    bindBtn.AutoButtonColor = false
-    corner(bindBtn, 6)
+    local bindBtn = new("TextButton", {
+        Name = "Bind",
+        Size = UDim2.new(0, 56, 0, 22),
+        Position = UDim2.new(1, -102, 0.5, -11),
+        BackgroundColor3 = Colors.Element,
+        Text = "—",
+        TextColor3 = Colors.SubText,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        AutoButtonColor = false,
+        ZIndex = 3
+    }, parent)
+    corner(bindBtn, 3)
     stroke(bindBtn, Colors.Stroke, 1, 0.4)
 
     local isWaiting = false
-
     bindBtn.MouseButton1Click:Connect(function()
         isWaiting = true
         bindBtn.Text = "..."
@@ -188,240 +407,373 @@ local function createBindBtn(parent, prop, button, statusFrame)
             bindBtn.TextColor3 = Colors.SubText
         elseif not isWaiting and input.UserInputType == Enum.UserInputType.Keyboard then
             if _G.NyzeBinds[prop] and input.KeyCode == _G.NyzeBinds[prop] then
-                if toggleFeature then toggleFeature(prop, button, statusFrame) end
+                toggleFeature(prop, button, statusFrame)
             end
         end
     end)
 end
 
--- ============ TOGGLE LOGIC ============
-toggleFeature = function(prop, button, statusFrame)
-    _G[prop] = not _G[prop]
-    if button and statusFrame then
-        pcall(function()
-            TweenService:Create(button, TweenInfo.new(0.25), {
-                BackgroundColor3 = _G[prop] and Colors.ElementHover or Colors.Element
-            }):Play()
-            TweenService:Create(statusFrame, TweenInfo.new(0.25), {
-                BackgroundColor3 = _G[prop] and Colors.Main or Color3.fromRGB(70, 72, 85)
-            }):Play()
-            local knob = statusFrame:FindFirstChild("Knob")
-            if knob then
-                TweenService:Create(knob, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {
-                    Position = _G[prop] and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
-                }):Play()
-            end
-        end)
-    end
-end
-
--- ============ МОБИЛЬНАЯ КНОПКА ============
-if isMobile then
-    local OpenBtn = Instance.new("TextButton", SG)
-    OpenBtn.Size = UDim2.new(0, 52, 0, 52)
-    OpenBtn.Position = UDim2.new(0, 12, 0.42, 0)
-    OpenBtn.BackgroundColor3 = Colors.Panel
-    OpenBtn.Text = "N"
-    OpenBtn.TextColor3 = Colors.Main
-    OpenBtn.Font = Enum.Font.GothamBold
-    OpenBtn.TextSize = 22
-    OpenBtn.AutoButtonColor = false
-    corner(OpenBtn, 26)
-    stroke(OpenBtn, Colors.Main, 1.5, 0.2)
-    OpenBtn.MouseButton1Click:Connect(function()
-        if toggleMenu then toggleMenu() end
-    end)
-end
-
--- ============ ГЛАВНОЕ ОКНО ============
-local M = Instance.new("Frame", SG)
-M.BackgroundColor3 = Colors.Background
-M.Position = UDim2.new(0.5, -310, 0, -450)
-M.Size = UDim2.new(0, 620, 0, 440)
-M.BorderSizePixel = 0
-M.Active = true
-M.Draggable = true
-M.Visible = false
-M.ClipsDescendants = true
+-- ============================================================
+--  ГЛАВНОЕ ОКНО
+-- ============================================================
+local M = new("Frame", {
+    BackgroundColor3 = Colors.Background,
+    Position = UDim2.new(0.5, -340, 0, -500),
+    Size = UDim2.new(0, 680, 0, 460),
+    BorderSizePixel = 0,
+    Active = true,
+    Draggable = true,
+    Visible = false,
+    ClipsDescendants = true
+}, SG)
 
 if isMobile then
-    M.Size = UDim2.new(0, 520, 0, 330)
-    M.Position = UDim2.new(0.5, -260, 0, -350)
+    M.Size = UDim2.new(0, 560, 0, 360)
+    M.Position = UDim2.new(0.5, -280, 0, -400)
 end
 
-corner(M, 14)
-local MainStroke = stroke(M, Colors.Stroke, 1.5, 0.2)
+corner(M, 6)
+local MainStroke = stroke(M, Colors.Main, 2, 0.3)
 
-local MainGradient = Instance.new("UIGradient", M)
-MainGradient.Rotation = 45
-MainGradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Colors.Background),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(18, 20, 28))
-})
+-- ============================================================
+--  TOP BAR (как в minecraft-читах: тонкая полоска сверху)
+-- ============================================================
+local TopStrip = pixelFrame(M, Colors.Main, UDim2.new(1, 0, 0, 3), UDim2.new(0, 0, 0, 0), 5)
 
--- ============ ЗАГОЛОВОК ============
-local TitleBar = Instance.new("Frame", M)
-TitleBar.Size = UDim2.new(1, 0, 0, 54)
-TitleBar.BackgroundColor3 = Colors.SidePanel
-TitleBar.BorderSizePixel = 0
-corner(TitleBar, 14)
+-- ============================================================
+--  TITLE BAR
+-- ============================================================
+local TitleBar = new("Frame", {
+    Size = UDim2.new(1, 0, 0, 56),
+    Position = UDim2.new(0, 0, 0, 3),
+    BackgroundColor3 = Colors.SidePanel,
+    BorderSizePixel = 0
+}, M)
 
-local FixCorner = Instance.new("Frame", TitleBar)
-FixCorner.Size = UDim2.new(1, 0, 0, 14)
-FixCorner.Position = UDim2.new(0, 0, 1, -14)
-FixCorner.BackgroundColor3 = Colors.SidePanel
-FixCorner.BorderSizePixel = 0
+-- логотип-квадрат (пиксельный стиль)
+local LogoBox = new("Frame", {
+    Size = UDim2.new(0, 40, 0, 40),
+    Position = UDim2.new(0, 14, 0.5, -20),
+    BackgroundColor3 = Colors.Main,
+    BorderSizePixel = 0,
+    ZIndex = 2
+}, TitleBar)
+corner(LogoBox, 4)
+stroke(LogoBox, Colors.Accent, 2, 0.2)
 
-local TitleLogo = Instance.new("TextLabel", TitleBar)
-TitleLogo.Size = UDim2.new(0, 40, 0, 40)
-TitleLogo.Position = UDim2.new(0, 12, 0.5, -20)
-TitleLogo.BackgroundTransparency = 1
-TitleLogo.Text = "N"
-TitleLogo.TextColor3 = Colors.Main
-TitleLogo.Font = Enum.Font.GothamBlack
-TitleLogo.TextSize = 22
+local LogoText = new("TextLabel", {
+    Size = UDim2.new(1, 0, 1, 0),
+    BackgroundTransparency = 1,
+    Text = "N",
+    TextColor3 = Colors.Text,
+    Font = Enum.Font.Code,
+    TextSize = 22,
+    ZIndex = 3
+}, LogoBox)
 
-local Title = Instance.new("TextLabel", TitleBar)
-Title.Size = UDim2.new(1, -120, 1, 0)
-Title.Position = UDim2.new(0, 60, 0, 0)
-Title.BackgroundTransparency = 1
-Title.Text = "NyzeRust"
-Title.TextColor3 = Colors.Text
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 17
-Title.TextXAlignment = Enum.TextXAlignment.Left
+local Title = new("TextLabel", {
+    Size = UDim2.new(1, -120, 0, 22),
+    Position = UDim2.new(0, 66, 0, 10),
+    BackgroundTransparency = 1,
+    Text = "NyzeRust",
+    TextColor3 = Colors.Text,
+    Font = Enum.Font.Code,
+    TextSize = 18,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, TitleBar)
 
-local SubTitle = Instance.new("TextLabel", TitleBar)
-SubTitle.Size = UDim2.new(1, -120, 0, 14)
-SubTitle.Position = UDim2.new(0, 62, 0, 32)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "xeno edition • v1.0"
-SubTitle.TextColor3 = Colors.SubText
-SubTitle.Font = Enum.Font.Gotham
-SubTitle.TextSize = 11
-SubTitle.TextXAlignment = Enum.TextXAlignment.Left
+local SubTitle = new("TextLabel", {
+    Size = UDim2.new(1, -120, 0, 16),
+    Position = UDim2.new(0, 68, 0, 32),
+    BackgroundTransparency = 1,
+    Text = "",
+    TextColor3 = Colors.SubText,
+    Font = Enum.Font.Code,
+    TextSize = 11,
+    TextXAlignment = Enum.TextXAlignment.Left
+}, TitleBar)
 
-local CloseBtn = Instance.new("TextButton", TitleBar)
-CloseBtn.Size = UDim2.new(0, 30, 0, 30)
-CloseBtn.Position = UDim2.new(1, -42, 0.5, -15)
-CloseBtn.BackgroundColor3 = Colors.Element
-CloseBtn.Text = "✕"
-CloseBtn.TextColor3 = Colors.Text
-CloseBtn.Font = Enum.Font.GothamBold
-CloseBtn.TextSize = 14
-CloseBtn.AutoButtonColor = false
-corner(CloseBtn, 8)
-CloseBtn.MouseButton1Click:Connect(function()
-    if toggleMenu then toggleMenu() end
-end)
+local CloseBtn = new("TextButton", {
+    Size = UDim2.new(0, 32, 0, 32),
+    Position = UDim2.new(1, -44, 0.5, -16),
+    BackgroundColor3 = Colors.Element,
+    Text = "×",
+    TextColor3 = Colors.Text,
+    Font = Enum.Font.Code,
+    TextSize = 20,
+    AutoButtonColor = false,
+    ZIndex = 2
+}, TitleBar)
+corner(CloseBtn, 3)
+CloseBtn.MouseButton1Click:Connect(function() toggleMenu() end)
 CloseBtn.MouseEnter:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(220, 60, 80)}):Play()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Danger}):Play()
 end)
 CloseBtn.MouseLeave:Connect(function()
-    TweenService:Create(CloseBtn, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Element}):Play()
+    TweenService:Create(CloseBtn, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
 end)
 
--- ============ CANVAS ============
-local Canvas = Instance.new("Frame", M)
-Canvas.Size = UDim2.new(1, 0, 1, -54)
-Canvas.Position = UDim2.new(0, 0, 0, 54)
-Canvas.BackgroundTransparency = 1
+-- ============================================================
+--  CANVAS
+-- ============================================================
+local Canvas = new("Frame", {
+    Size = UDim2.new(1, 0, 1, -59),
+    Position = UDim2.new(0, 0, 0, 59),
+    BackgroundTransparency = 1
+}, M)
 
--- ============ SIDEBAR ============
-local Side = Instance.new("Frame", Canvas)
-Side.Position = UDim2.new(0, 12, 0, 12)
-Side.Size = UDim2.new(0, 130, 1, -24)
-Side.BackgroundColor3 = Colors.SidePanel
-Side.BorderSizePixel = 0
-corner(Side, 10)
+-- ============================================================
+--  SIDEBAR (вкладки)
+-- ============================================================
+local Side = new("Frame", {
+    Position = UDim2.new(0, 12, 0, 12),
+    Size = UDim2.new(0, 140, 1, -24),
+    BackgroundColor3 = Colors.SidePanel,
+    BorderSizePixel = 0
+}, Canvas)
+corner(Side, 4)
 stroke(Side, Colors.Stroke, 1, 0.5)
 
-local SideLayout = Instance.new("UIListLayout", Side)
-SideLayout.Padding = UDim.new(0, 6)
-SideLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local SideLayout = new("UIListLayout", {
+    Padding = UDim.new(0, 6),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, Side)
 padding(Side, 8)
 
--- ============ КОНТЕЙНЕР ============
-local Container = Instance.new("ScrollingFrame", Canvas)
-Container.Position = UDim2.new(0, 154, 0, 12)
-Container.Size = UDim2.new(1, -166, 1, -24)
-Container.BackgroundColor3 = Colors.Panel
-Container.BorderSizePixel = 0
-Container.ScrollBarThickness = isMobile and 0 or 3
-Container.ScrollBarImageColor3 = Colors.Main
-Container.CanvasSize = UDim2.new(0, 0, 0, 0)
-Container.AutomaticCanvasSize = Enum.AutomaticSize.Y
-corner(Container, 10)
+-- ============================================================
+--  CONTAINER (контент вкладок)
+-- ============================================================
+local Container = new("ScrollingFrame", {
+    Position = UDim2.new(0, 164, 0, 12),
+    Size = UDim2.new(1, -176, 1, -24),
+    BackgroundColor3 = Colors.Panel,
+    BorderSizePixel = 0,
+    ScrollBarThickness = isMobile and 0 or 3,
+    ScrollBarImageColor3 = Colors.Main,
+    CanvasSize = UDim2.new(0, 0, 0, 0),
+    AutomaticCanvasSize = Enum.AutomaticSize.Y
+}, Canvas)
+corner(Container, 4)
 stroke(Container, Colors.Stroke, 1, 0.5)
 padding(Container, 10)
 
-local ContainerLayout = Instance.new("UIListLayout", Container)
-ContainerLayout.Padding = UDim.new(0, 8)
-ContainerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+local ContainerLayout = new("UIListLayout", {
+    Padding = UDim.new(0, 6),
+    SortOrder = Enum.SortOrder.LayoutOrder
+}, Container)
 
--- ============ APPLY THEME ============
-local function ApplyTheme(themeName)
-    local theme = Themes[themeName]
-    if not theme then return end
-    Colors = theme
+-- ============================================================
+--  ФУНКЦИИ UI
+-- ============================================================
 
-    pcall(function()
-        MainGradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, theme.Background),
-            ColorSequenceKeypoint.new(1, theme.Panel)
-        })
-        M.BackgroundColor3 = theme.Background
-        MainStroke.Color = theme.Stroke
-        TitleBar.BackgroundColor3 = theme.SidePanel
-        FixCorner.BackgroundColor3 = theme.SidePanel
-        Side.BackgroundColor3 = theme.SidePanel
-        Container.BackgroundColor3 = theme.Panel
+-- Заголовок категории внутри контейнера
+local function createCategory(title, order)
+    local f = new("Frame", {
+        Size = UDim2.new(1, -6, 0, 30),
+        BackgroundTransparency = 1,
+        LayoutOrder = order
+    }, Container)
+    local bar = pixelFrame(f, Colors.Main, UDim2.new(0, 3, 0, 16), UDim2.new(0, 2, 0.5, -8))
+    local lbl = new("TextLabel", {
+        Size = UDim2.new(1, -20, 1, 0),
+        Position = UDim2.new(0, 14, 0, 0),
+        BackgroundTransparency = 1,
+        Text = title,
+        TextColor3 = Colors.Main,
+        Font = Enum.Font.Code,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, f)
+    return f
+end
 
-        TitleLogo.TextColor3 = theme.Main
-        Title.TextColor3 = theme.Text
-        SubTitle.TextColor3 = theme.SubText
+-- Toggle
+local function createToggle(parentTab, label, prop, order)
+    local b = new("TextButton", {
+        Size = UDim2.new(1, -6, 0, 40),
+        BackgroundColor3 = State[prop] and Colors.ElementHover or Colors.Element,
+        Text = "",
+        AutoButtonColor = false,
+        LayoutOrder = order,
+        Visible = false
+    }, Container)
+    corner(b, 4)
+    stroke(b, Colors.Stroke, 1, 0.5)
+    table.insert(parentTab, b)
 
-        CloseBtn.BackgroundColor3 = theme.Element
-        CloseBtn.TextColor3 = theme.Text
+    -- маленький пиксель-маркер слева
+    local marker = pixelFrame(b, State[prop] and Colors.Main or Colors.Stroke,
+        UDim2.new(0, 3, 0, 22), UDim2.new(0, 0, 0.5, -11))
 
-        if _G.WFrame then
-            _G.WFrame.BackgroundColor3 = theme.Background
-            _G.WStroke.Color = theme.Stroke
+    local lbl = new("TextLabel", {
+        Size = UDim2.new(1, -150, 1, 0),
+        Position = UDim2.new(0, 16, 0, 0),
+        BackgroundTransparency = 1,
+        Text = label,
+        TextColor3 = Colors.Text,
+        Font = Enum.Font.Code,
+        TextSize = 13,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, b)
+
+    local status = new("Frame", {
+        Size = UDim2.new(0, 34, 0, 18),
+        Position = UDim2.new(1, -48, 0.5, -9),
+        BackgroundColor3 = State[prop] and Colors.Main or Color3.fromRGB(60, 60, 70),
+        BorderSizePixel = 0
+    }, b)
+    corner(status, 3)
+
+    local knob = new("Frame", {
+        Name = "Knob",
+        Size = UDim2.new(0, 14, 0, 14),
+        Position = State[prop] and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7),
+        BackgroundColor3 = Color3.new(1, 1, 1),
+        BorderSizePixel = 0
+    }, status)
+    corner(knob, 2)
+
+    -- синхронизация маркера с toggle
+    b.MouseButton1Click:Connect(function()
+        toggleFeature(prop, b, status)
+        TweenService:Create(marker, TweenInfo.new(0.15), {
+            BackgroundColor3 = State[prop] and Colors.Main or Colors.Stroke
+        }):Play()
+    end)
+
+    b.MouseEnter:Connect(function()
+        if not State[prop] then
+            TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
         end
+    end)
+    b.MouseLeave:Connect(function()
+        if not State[prop] then
+            TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
+        end
+    end)
 
-        for _, obj in ipairs(Container:GetDescendants()) do
-            if obj:IsA("TextLabel") then
-                if obj.Name == "SubLabel" then obj.TextColor3 = theme.SubText
-                elseif obj.Name == "Label" then obj.TextColor3 = theme.Text end
-            elseif obj:IsA("TextButton") then
-                if obj.Name ~= "Bind" then obj.TextColor3 = theme.Text end
-            end
+    createBindBtn(b, prop, b, status)
+end
+
+-- Slider
+local function createSlider(parentTab, label, prop, min, max, order)
+    local f = new("Frame", {
+        Size = UDim2.new(1, -6, 0, 54),
+        BackgroundColor3 = Colors.Element,
+        LayoutOrder = order,
+        Visible = false,
+        BorderSizePixel = 0
+    }, Container)
+    corner(f, 4)
+    stroke(f, Colors.Stroke, 1, 0.5)
+    table.insert(parentTab, f)
+
+    local lbl = new("TextLabel", {
+        Size = UDim2.new(1, -110, 0, 18),
+        Position = UDim2.new(0, 14, 0, 8),
+        BackgroundTransparency = 1,
+        Text = label,
+        TextColor3 = Colors.Text,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left
+    }, f)
+
+    local valLbl = new("TextLabel", {
+        Size = UDim2.new(0, 90, 0, 18),
+        Position = UDim2.new(1, -104, 0, 8),
+        BackgroundTransparency = 1,
+        Text = tostring(State[prop]),
+        TextColor3 = Colors.Main,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Right
+    }, f)
+
+    local barBg = new("Frame", {
+        Size = UDim2.new(1, -28, 0, 6),
+        Position = UDim2.new(0, 14, 0, 36),
+        BackgroundColor3 = Color3.fromRGB(50, 50, 60),
+        BorderSizePixel = 0
+    }, f)
+    corner(barBg, 2)
+
+    local fill = new("Frame", {
+        Size = UDim2.new((State[prop] - min) / (max - min), 0, 1, 0),
+        BackgroundColor3 = Colors.Main,
+        BorderSizePixel = 0
+    }, barBg)
+    corner(fill, 2)
+
+    local trigger = new("TextButton", {
+        Size = UDim2.new(1, 0, 1, 0),
+        BackgroundTransparency = 1,
+        Text = ""
+    }, barBg)
+
+    local dragging = false
+    local function update(input)
+        local pos = math.clamp((input.Position.X - barBg.AbsolutePosition.X) / barBg.AbsoluteSize.X, 0, 1)
+        local val = min + (max - min) * pos
+        val = (max > 5) and math.floor(val) or math.floor(val * 100) / 100
+        State[prop] = val
+        fill.Size = UDim2.new(pos, 0, 1, 0)
+        valLbl.Text = tostring(val)
+    end
+
+    trigger.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            update(input)
+        end
+    end)
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch) then
+            update(input)
         end
     end)
 end
 
--- ============ TOGGLE MENU ============
-local menuToggled = false
-function toggleMenu()
-    menuToggled = not menuToggled
-    if menuToggled then
-        M.Visible = true
-        if not isMobile then UserInputService.MouseIconEnabled = true end
-        TweenService:Create(Blur, TweenInfo.new(0.4), {Size = 14}):Play()
-        local targetPos = isMobile and UDim2.new(0.5, -260, 0.5, -165) or UDim2.new(0.5, -310, 0.5, -220)
-        TweenService:Create(M, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = targetPos}):Play()
-    else
-        if not isMobile then UserInputService.MouseIconEnabled = false end
-        TweenService:Create(Blur, TweenInfo.new(0.4), {Size = 0}):Play()
-        local targetPos = isMobile and UDim2.new(0.5, -260, 0, -350) or UDim2.new(0.5, -310, 0, -450)
-        local t = TweenService:Create(M, TweenInfo.new(0.45, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = targetPos})
-        t:Play()
-        t.Completed:Connect(function() if not menuToggled then M.Visible = false end end)
-    end
+-- Кнопка действия
+local function createButton(parentTab, label, callback, order)
+    local b = new("TextButton", {
+        Size = UDim2.new(1, -6, 0, 34),
+        BackgroundColor3 = Colors.Element,
+        Text = "  " .. label,
+        TextColor3 = Colors.Text,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutoButtonColor = false,
+        LayoutOrder = order,
+        Visible = false
+    }, Container)
+    corner(b, 4)
+    stroke(b, Colors.Stroke, 1, 0.5)
+    table.insert(parentTab, b)
+
+    b.MouseButton1Click:Connect(callback)
+    b.MouseEnter:Connect(function()
+        TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
+    end)
+    b.MouseLeave:Connect(function()
+        TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
+    end)
 end
 
--- ============ ВКЛАДКИ ============
-local Tabs = { ESP = {}, AIM = {}, VIS = {}, PLR = {}, CFG = {} }
+-- ============================================================
+--  ВКЛАДКИ
+-- ============================================================
+local Tabs = {VISUALS = {}, AIM = {}, PLAYER = {}, WORLD = {}, SETTINGS = {}}
+local tabButtons = {}
 
 local function showTab(name)
     for tN, objs in pairs(Tabs) do
@@ -429,282 +781,208 @@ local function showTab(name)
             o.Visible = (tN == name)
         end
     end
-end
-
--- ============ TOGGLE CREATOR ============
-local function createToggle(tab, name, prop, order)
-    local b = Instance.new("TextButton", Container)
-    b.Size = UDim2.new(1, -6, 0, 40)
-    b.BackgroundColor3 = _G[prop] and Colors.ElementHover or Colors.Element
-    b.Text = ""
-    b.AutoButtonColor = false
-    b.LayoutOrder = order
-    b.Visible = false
-    corner(b, 8)
-    stroke(b, Colors.Stroke, 1, 0.5)
-
-    local lbl = Instance.new("TextLabel", b)
-    lbl.Name = "Label"
-    lbl.Size = UDim2.new(1, -140, 1, 0)
-    lbl.Position = UDim2.new(0, 14, 0, 0)
-    lbl.BackgroundTransparency = 1
-    lbl.Text = name
-    lbl.TextColor3 = Colors.Text
-    lbl.Font = Enum.Font.GothamMedium
-    lbl.TextSize = 13
-    lbl.TextXAlignment = Enum.TextXAlignment.Left
-
-    local status = Instance.new("Frame", b)
-    status.Size = UDim2.new(0, 36, 0, 18)
-    status.Position = UDim2.new(1, -50, 0.5, -9)
-    status.BackgroundColor3 = _G[prop] and Colors.Main or Color3.fromRGB(70, 72, 85)
-    status.BorderSizePixel = 0
-    corner(status, 9)
-
-    local knob = Instance.new("Frame", status)
-    knob.Name = "Knob"
-    knob.Size = UDim2.new(0, 14, 0, 14)
-    knob.Position = _G[prop] and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
-    knob.BackgroundColor3 = Color3.new(1, 1, 1)
-    knob.BorderSizePixel = 0
-    corner(knob, 7)
-
-    table.insert(Tabs[tab], b)
-
-    b.MouseButton1Click:Connect(function()
-        toggleFeature(prop, b, status)
-    end)
-
-    b.MouseEnter:Connect(function()
-        if not _G[prop] then
-            TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Colors.ElementHover}):Play()
-        end
-    end)
-    b.MouseLeave:Connect(function()
-        if not _G[prop] then
-            TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Element}):Play()
-        end
-    end)
-
-    createBindBtn(b, prop, b, status)
-end
-
--- ============ SLIDER CREATOR ============
-local function createSlider(tab, name, prop, min, max, order)
-    local frame = Instance.new("Frame", Container)
-    frame.Size = UDim2.new(1, -6, 0, 56)
-    frame.BackgroundColor3 = Colors.Element
-    frame.LayoutOrder = order
-    frame.Visible = false
-    frame.BorderSizePixel = 0
-    corner(frame, 8)
-    stroke(frame, Colors.Stroke, 1, 0.5)
-    table.insert(Tabs[tab], frame)
-
-    local label = Instance.new("TextLabel", frame)
-    label.Name = "Label"
-    label.Size = UDim2.new(1, -20, 0, 18)
-    label.Position = UDim2.new(0, 14, 0, 8)
-    label.BackgroundTransparency = 1
-    label.Text = name
-    label.TextColor3 = Colors.Text
-    label.Font = Enum.Font.GothamMedium
-    label.TextSize = 12
-    label.TextXAlignment = Enum.TextXAlignment.Left
-
-    local valueLbl = Instance.new("TextLabel", frame)
-    valueLbl.Name = "SubLabel"
-    valueLbl.Size = UDim2.new(0, 80, 0, 18)
-    valueLbl.Position = UDim2.new(1, -94, 0, 8)
-    valueLbl.BackgroundTransparency = 1
-    valueLbl.Text = tostring(_G[prop])
-    valueLbl.TextColor3 = Colors.Main
-    valueLbl.Font = Enum.Font.GothamBold
-    valueLbl.TextSize = 12
-    valueLbl.TextXAlignment = Enum.TextXAlignment.Right
-
-    local bg = Instance.new("Frame", frame)
-    bg.Size = UDim2.new(1, -28, 0, 6)
-    bg.Position = UDim2.new(0, 14, 0, 38)
-    bg.BackgroundColor3 = Color3.fromRGB(45, 48, 62)
-    bg.BorderSizePixel = 0
-    corner(bg, 3)
-
-    local fill = Instance.new("Frame", bg)
-    fill.Size = UDim2.new((_G[prop] - min) / (max - min), 0, 1, 0)
-    fill.BackgroundColor3 = Colors.Main
-    fill.BorderSizePixel = 0
-    corner(fill, 3)
-
-    local trigger = Instance.new("TextButton", bg)
-    trigger.Size = UDim2.new(1, 0, 1, 0)
-    trigger.BackgroundTransparency = 1
-    trigger.Text = ""
-
-    local dragging = false
-    local function update(input)
-        local inputPos = input.Position.X
-        local pos = math.clamp((inputPos - bg.AbsolutePosition.X) / bg.AbsoluteSize.X, 0, 1)
-        local val = min + (max - min) * pos
-        val = (max > 5) and math.floor(val) or math.floor(val * 100) / 100
-        _G[prop] = val
-        fill.Size = UDim2.new(pos, 0, 1, 0)
-        valueLbl.Text = tostring(val)
+    for key, btn in pairs(tabButtons) do
+        TweenService:Create(btn, TweenInfo.new(0.15), {
+            BackgroundColor3 = (key == name) and Colors.ElementHover or Colors.Element,
+            TextColor3 = (key == name) and Colors.Main or Colors.Text
+        }):Play()
+        local bar = btn:FindFirstChild("ActiveBar")
+        if bar then bar.Visible = (key == name) end
     end
-
-    trigger.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            update(input)
-        end
-    end)
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            update(input)
-        end
-    end)
 end
 
--- ============ THEME BUTTON ============
-local function createThemeBtn(name, themeKey, order)
-    local b = Instance.new("TextButton", Container)
-    b.Size = UDim2.new(1, -6, 0, 36)
-    b.BackgroundColor3 = Colors.Element
-    b.Text = "   " .. name
-    b.TextColor3 = Colors.Text
-    b.Font = Enum.Font.GothamMedium
-    b.TextSize = 12
-    b.TextXAlignment = Enum.TextXAlignment.Left
-    b.AutoButtonColor = false
-    b.LayoutOrder = order
-    b.Visible = false
-    corner(b, 8)
-    stroke(b, Colors.Stroke, 1, 0.5)
-    table.insert(Tabs.VIS, b)
+local function createTabBtn(name, label, order)
+    local b = new("TextButton", {
+        Size = UDim2.new(1, 0, 0, 38),
+        BackgroundColor3 = Colors.Element,
+        Text = "   " .. label,
+        TextColor3 = Colors.Text,
+        Font = Enum.Font.Code,
+        TextSize = 12,
+        TextXAlignment = Enum.TextXAlignment.Left,
+        AutoButtonColor = false,
+        LayoutOrder = order
+    }, Side)
+    corner(b, 3)
+    stroke(b, Colors.Stroke, 1, 0.4)
 
-    b.MouseButton1Click:Connect(function() ApplyTheme(themeKey) end)
+    local activeBar = pixelFrame(b, Colors.Main, UDim2.new(0, 3, 0, 22), UDim2.new(0, 0, 0.5, -11))
+    activeBar.Name = "ActiveBar"
+    activeBar.Visible = false
+
+    tabButtons[name] = b
+
+    b.MouseButton1Click:Connect(function() showTab(name) end)
     b.MouseEnter:Connect(function()
-        TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Colors.ElementHover}):Play()
-    end)
-    b.MouseLeave:Connect(function()
-        TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Colors.Element}):Play()
-    end)
-end
-
--- ============ TAB BUTTON ============
-local tabButtons = {}
-local function createTabBtn(n, label, order)
-    local b = Instance.new("TextButton", Side)
-    b.Size = UDim2.new(1, 0, 0, 38)
-    b.BackgroundColor3 = Color3.fromRGB(28, 30, 40)
-    b.Text = "  " .. label
-    b.TextColor3 = Colors.Text
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 12
-    b.TextXAlignment = Enum.TextXAlignment.Left
-    b.AutoButtonColor = false
-    b.LayoutOrder = order
-    corner(b, 8)
-
-    tabButtons[n] = b
-
-    b.MouseButton1Click:Connect(function()
-        for key, btn in pairs(tabButtons) do
-            TweenService:Create(btn, TweenInfo.new(0.25), {
-                BackgroundColor3 = (key == n) and Color3.fromRGB(35, 38, 50) or Color3.fromRGB(28, 30, 40),
-                TextColor3 = (key == n) and Colors.Main or Colors.Text
-            }):Play()
-        end
-        showTab(n)
-    end)
-
-    b.MouseEnter:Connect(function()
-        if not (b.BackgroundColor3 == Color3.fromRGB(35, 38, 50)) then
-            TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Colors.ElementHover}):Play()
+        if not activeBar.Visible then
+            TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.ElementHover}):Play()
         end
     end)
     b.MouseLeave:Connect(function()
-        if b.TextColor3 ~= Colors.Main then
-            TweenService:Create(b, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(28, 30, 40)}):Play()
+        if not activeBar.Visible then
+            TweenService:Create(b, TweenInfo.new(0.15), {BackgroundColor3 = Colors.Element}):Play()
         end
     end)
 end
 
--- ============ НАПОЛНЕНИЕ ============
-createTabBtn("ESP", "ESP", 1)
-createTabBtn("AIM", "AIMBOT", 2)
-createTabBtn("VIS", "VISUALS", 3)
-createTabBtn("PLR", "PLAYER", 4)
-createTabBtn("CFG", "CONFIG", 5)
+-- ============================================================
+--  НАПОЛНЕНИЕ ВКЛАДОК
+-- ============================================================
+createTabBtn("VISUALS",  t("tab_visuals"),  1)
+createTabBtn("AIM",      t("tab_aim"),      2)
+createTabBtn("PLAYER",   t("tab_player"),   3)
+createTabBtn("WORLD",    t("tab_world"),    4)
+createTabBtn("SETTINGS", t("tab_settings"), 5)
 
--- ESP
-createToggle("ESP", "Player Boxes",     "EspBoxes",     1)
-createToggle("ESP", "Name Tags",        "EspNames",     2)
-createToggle("ESP", "Distance Info",    "EspDist",      3)
-createToggle("ESP", "Health Bar",       "EspHP",        4)
-createToggle("ESP", "Tracers",          "EspTracers",   5)
-createToggle("ESP", "NPC ESP",          "NpcEsp",       6)
-createSlider("ESP", "Player Max Dist",  "PlayerEspMaxDist", 100, 5000, 7)
+-- ===== VISUALS: ESP =====
+createCategory(t("cat_esp"), 1)
+createToggle(Tabs.VISUALS, t("esp_boxes"),    "EspBoxes",    2)
+createToggle(Tabs.VISUALS, t("esp_names"),    "EspNames",    3)
+createToggle(Tabs.VISUALS, t("esp_dist"),     "EspDist",     4)
+createToggle(Tabs.VISUALS, t("esp_hp"),       "EspHP",       5)
+createToggle(Tabs.VISUALS, t("esp_hpnum"),    "EspHPNum",    6)
+createToggle(Tabs.VISUALS, t("esp_inv"),      "EspInv",      7)
+createToggle(Tabs.VISUALS, t("esp_tracers"),  "EspTracers",  8)
+createToggle(Tabs.VISUALS, t("esp_skeleton"), "EspSkeleton", 9)
+createToggle(Tabs.VISUALS, t("esp_head"),     "EspHead",    10)
+createSlider(Tabs.VISUALS, t("esp_maxdist"),  "PlayerEspMaxDist", 100, 5000, 11)
 
--- AIM
-createToggle("AIM", "Enable Aimbot",    "AimEnabled",   1)
-createToggle("AIM", "Team Check",       "TeamCheck",    2)
-createToggle("AIM", "Wall Check",       "WallCheck",    3)
-createToggle("AIM", "No Bullet Drop",   "NoBulletDrop", 4)
-createSlider("AIM", "Smoothing",        "AimSmooth",    0.01, 1, 5)
-createSlider("AIM", "FOV Radius",       "AimFOV",       10, 800, 6)
+-- ===== AIM =====
+createCategory(t("cat_aim"), 20)
+createToggle(Tabs.AIM, t("aim_enabled"), "AimEnabled",  21)
+createToggle(Tabs.AIM, t("aim_team"),    "TeamCheck",   22)
+createToggle(Tabs.AIM, t("aim_wall"),    "WallCheck",   23)
+createToggle(Tabs.AIM, t("aim_nodrop"),  "NoBulletDrop",24)
+createSlider(Tabs.AIM, t("aim_smooth"),  "AimSmooth",   0.01, 1, 25)
+createSlider(Tabs.AIM, t("aim_fov"),     "AimFOV",      20, 800, 26)
 
--- VIS
-createToggle("VIS", "Full Bright",      "FullBright",   1)
-createToggle("VIS", "Sulfur Ore",       "SulfurEsp",    2)
-createToggle("VIS", "Iron Ore",         "IronEsp",      3)
-createToggle("VIS", "Stone Ore",        "StoneEsp",     4)
-createSlider("VIS", "Ore Distance",     "OreEspMaxDist", 50, 3000, 5)
-createSlider("VIS", "NPC Distance",     "NpcEspMaxDist", 50, 3000, 6)
-createToggle("VIS", "Common Crate",     "CrateEsp",     7)
-createToggle("VIS", "Military Crate",   "MilitaryEsp",  8)
-createToggle("VIS", "Elite Crate",      "EliteEsp",     9)
-createToggle("VIS", "Food Box",         "FoodEsp",      10)
-createSlider("VIS", "Crate Distance",   "CrateEspMaxDist", 50, 3000, 11)
-createThemeBtn("Nyze Dark",  "NyzeDark", 20)
-createThemeBtn("Carbon",     "Carbon",   21)
-createThemeBtn("Violet",     "Violet",   22)
+-- ===== PLAYER =====
+createCategory(t("cat_misc"), 30)
+createToggle(Tabs.PLAYER, t("ply_speed"),    "LegitSpeed",    31)
+createSlider(Tabs.PLAYER, t("ply_speedpow"), "SpeedMultiplier",1, 5, 32)
+createToggle(Tabs.PLAYER, t("ply_infjump"),  "InfJump",       33)
+createToggle(Tabs.PLAYER, t("ply_freecam"),  "FreecamEnabled",34)
+createSlider(Tabs.PLAYER, t("ply_flyspeed"), "FreecamSpeed",  0.1, 10, 35)
 
--- PLR
-createToggle("PLR", "Freecam",          "FreecamEnabled", 1)
-createSlider("PLR", "Fly Speed",        "FreecamSpeed",   0.1, 10, 2)
-createToggle("PLR", "Infinite Jump",    "InfJump",        3)
-createToggle("PLR", "Legit Speed",      "LegitSpeed",     4)
-createSlider("PLR", "Speed Power",      "SpeedMultiplier",1, 5, 5)
+-- ===== WORLD =====
+createCategory(t("cat_world"), 40)
+createToggle(Tabs.WORLD, t("wld_fullbr"), "FullBright", 41)
+createToggle(Tabs.WORLD, t("wld_sulfur"), "SulfurEsp",  42)
+createToggle(Tabs.WORLD, t("wld_iron"),   "IronEsp",    43)
+createToggle(Tabs.WORLD, t("wld_stone"),  "StoneEsp",   44)
+createToggle(Tabs.WORLD, t("wld_npc"),    "NpcEsp",     45)
+createToggle(Tabs.WORLD, t("wld_crates"), "CrateEsp",   46)
+createSlider(Tabs.WORLD, t("wld_ore_dist"),   "OreEspMaxDist",  50, 3000, 47)
+createSlider(Tabs.WORLD, t("wld_npc_dist"),   "NpcEspMaxDist",  50, 3000, 48)
+createSlider(Tabs.WORLD, t("wld_crate_dist"), "CrateEspMaxDist",50, 3000, 49)
 
--- CFG
-local cfgInfo = Instance.new("TextLabel", Container)
-cfgInfo.Size = UDim2.new(1, -6, 0, 130)
-cfgInfo.BackgroundColor3 = Colors.Element
-cfgInfo.LayoutOrder = 1
-cfgInfo.Visible = false
-cfgInfo.Text = "  NyzeRust v1.0 — Xeno Edition\n\n  Menu toggle:  RSHIFT\n  Bind: click on [—] → press key\n  Unbind: click bind → ESC\n\n  Made for study purposes"
-cfgInfo.TextColor3 = Colors.SubText
-cfgInfo.Font = Enum.Font.GothamMedium
-cfgInfo.TextSize = 12
-cfgInfo.TextXAlignment = Enum.TextXAlignment.Left
-cfgInfo.TextYAlignment = Enum.TextYAlignment.Top
-cfgInfo.TextWrapped = true
-corner(cfgInfo, 8)
-stroke(cfgInfo, Colors.Stroke, 1, 0.5)
-padding(cfgInfo, 12)
-table.insert(Tabs.CFG, cfgInfo)
+-- ===== SETTINGS =====
+createCategory(t("set_theme"), 60)
+createButton(Tabs.SETTINGS, t("theme_netherite"), function() ApplyTheme("Netherite") end, 61)
+createButton(Tabs.SETTINGS, t("theme_redstone"),  function() ApplyTheme("Redstone")  end, 62)
+createButton(Tabs.SETTINGS, t("theme_diamond"),   function() ApplyTheme("Diamond")   end, 63)
+createButton(Tabs.SETTINGS, t("theme_emerald"),   function() ApplyTheme("Emerald")   end, 64)
 
--- ============ GAME LOGIC ============
+createCategory(t("set_lang"), 70)
+createButton(Tabs.SETTINGS, "Русский (RU)", function() LANG = "RU" ; RefreshLocalization() end, 71)
+createButton(Tabs.SETTINGS, "English (EN)", function() LANG = "EN" ; RefreshLocalization() end, 72)
+
+-- ============================================================
+--  APPLY THEME
+-- ============================================================
+function ApplyTheme(themeName)
+    local th = Themes[themeName]
+    if not th then return end
+    Colors = th
+
+    M.BackgroundColor3 = th.Background
+    MainStroke.Color = th.Main
+    TitleBar.BackgroundColor3 = th.SidePanel
+    Side.BackgroundColor3 = th.SidePanel
+    Container.BackgroundColor3 = th.Panel
+    LogoBox.BackgroundColor3 = th.Main
+    TopStrip.BackgroundColor3 = th.Main
+    Title.TextColor3 = th.Text
+    SubTitle.TextColor3 = th.SubText
+    CloseBtn.BackgroundColor3 = th.Element
+    CloseBtn.TextColor3 = th.Text
+
+    for _, obj in ipairs(Container:GetDescendants()) do
+        if obj:IsA("Frame") then
+            if obj.Name == "Knob" then
+                obj.BackgroundColor3 = Color3.new(1, 1, 1)
+            elseif obj ~= nil and obj:FindFirstChild("Label") == nil then
+                -- не трогаем fill и barBg
+            end
+        end
+    end
+end
+
+-- ============================================================
+--  REFRESH LOCALIZATION
+-- ============================================================
+function RefreshLocalization()
+    SubTitle.Text = t("subtitle") .. "  •  " .. t("menu_hint")
+end
+
+RefreshLocalization()
+
+-- ============================================================
+--  TOGGLE MENU
+-- ============================================================
+local menuToggled = false
+function toggleMenu()
+    menuToggled = not menuToggled
+    if menuToggled then
+        M.Visible = true
+        if not isMobile then UserInputService.MouseIconEnabled = true end
+        TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 12}):Play()
+        local target = isMobile
+            and UDim2.new(0.5, -280, 0.5, -180)
+            or  UDim2.new(0.5, -340, 0.5, -230)
+        TweenService:Create(M, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
+            {Position = target}):Play()
+    else
+        if not isMobile then UserInputService.MouseIconEnabled = false end
+        TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 0}):Play()
+        local target = isMobile
+            and UDim2.new(0.5, -280, 0, -400)
+            or  UDim2.new(0.5, -340, 0, -500)
+        local tw = TweenService:Create(M, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.In),
+            {Position = target})
+        tw:Play()
+        tw.Completed:Connect(function()
+            if not menuToggled then M.Visible = false end
+        end)
+    end
+end
+
+-- ============================================================
+--  МОБИЛЬНАЯ КНОПКА
+-- ============================================================
+if isMobile then
+    local OpenBtn = new("TextButton", {
+        Size = UDim2.new(0, 52, 0, 52),
+        Position = UDim2.new(0, 12, 0.42, 0),
+        BackgroundColor3 = Colors.SidePanel,
+        Text = "N",
+        TextColor3 = Colors.Main,
+        Font = Enum.Font.Code,
+        TextSize = 24,
+        AutoButtonColor = false
+    }, SG)
+    corner(OpenBtn, 6)
+    stroke(OpenBtn, Colors.Main, 2, 0.2)
+    OpenBtn.MouseButton1Click:Connect(toggleMenu)
+end
+
+-- ============================================================
+--  GAME LOGIC
+-- ============================================================
 
 -- AntiBulletDrop
 workspace.DescendantAdded:Connect(function(obj)
-    if _G.NoBulletDrop and obj:IsA("BasePart") and (obj.Name:find("Bullet") or obj.Name:find("Projectile")) then
+    if State.NoBulletDrop and obj:IsA("BasePart") and (obj.Name:find("Bullet") or obj.Name:find("Projectile")) then
         pcall(function()
             local bf = Instance.new("BodyForce")
             bf.Force = Vector3.new(0, obj:GetMass() * workspace.Gravity, 0)
@@ -715,7 +993,7 @@ end)
 
 -- isVisible
 local function isVisible(targetPart)
-    if not _G.WallCheck then return true end
+    if not State.WallCheck then return true end
     local char = LocalPlayer.Character
     if not char then return false end
     local params = RaycastParams.new()
@@ -725,7 +1003,31 @@ local function isVisible(targetPart)
     return ray == nil
 end
 
--- CRATE VISUALS
+-- ============================================================
+--  INVENTORY SCAN (Roblox-инвентарь через Backpack + Character)
+-- ============================================================
+local function getPlayerInventoryText(p)
+    local items = {}
+    -- Backpack (неэкипированное)
+    local bp = p:FindFirstChildOfClass("Backpack")
+    if bp then
+        for _, t in ipairs(bp:GetChildren()) do
+            if t:IsA("Tool") then table.insert(items, t.Name) end
+        end
+    end
+    -- Character (экипированное)
+    if p.Character then
+        for _, t in ipairs(p.Character:GetChildren()) do
+            if t:IsA("Tool") then table.insert(items, "[E] " .. t.Name) end
+        end
+    end
+    if #items == 0 then return nil end
+    return table.concat(items, "\n")
+end
+
+-- ============================================================
+--  WORLD ESP (ore/npc/crate)
+-- ============================================================
 local function applyCrateVisuals(obj, name, color)
     if not obj:FindFirstChild("CrateHighlight") then
         local h = Instance.new("Highlight", obj)
@@ -733,21 +1035,23 @@ local function applyCrateVisuals(obj, name, color)
         h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     end
     if not obj:FindFirstChild("CrateTag") then
-        local bg = Instance.new("BillboardGui", obj)
-        bg.Name, bg.AlwaysOnTop, bg.Size = "CrateTag", true, UDim2.new(0, 100, 0, 40)
-        bg.ExtentsOffset = Vector3.new(0, 2, 0)
-        local lbl = Instance.new("TextLabel", bg)
-        lbl.Name = "Label"
-        lbl.BackgroundTransparency, lbl.Size, lbl.TextSize = 1, UDim2.new(1, 0, 1, 0), 13
-        lbl.TextColor3 = Color3.new(1, 1, 1)
-        lbl.Font = Enum.Font.GothamBold
-        lbl.TextStrokeTransparency = 0
+        local bg = new("BillboardGui", {
+            Name = "CrateTag", AlwaysOnTop = true,
+            Size = UDim2.new(0, 120, 0, 40),
+            ExtentsOffset = Vector3.new(0, 2, 0)
+        }, obj)
+        local lbl = new("TextLabel", {
+            Name = "Label", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), TextSize = 13,
+            TextColor3 = Color3.new(1, 1, 1),
+            Font = Enum.Font.Code, TextStrokeTransparency = 0
+        }, bg)
     end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if root then
-        local pos = (obj:IsA("Model") and obj:GetModelCFrame().Position or obj.Position)
+        local pos = obj:IsA("Model") and obj:GetModelCFrame().Position or obj.Position
         local dist = math.floor((root.Position - pos).Magnitude)
-        if dist <= _G.CrateEspMaxDist then
+        if dist <= State.CrateEspMaxDist then
             obj.CrateTag.Enabled, obj.CrateHighlight.Enabled = true, true
             obj.CrateTag.Label.Text = name:upper() .. "\n[" .. dist .. "m]"
             obj.CrateTag.Label.TextColor3 = color
@@ -758,7 +1062,6 @@ local function applyCrateVisuals(obj, name, color)
     end
 end
 
--- NPC ESP
 local function updateNpcEsp()
     local npcFolder = workspace:FindFirstChild("Npc")
     if not npcFolder then return end
@@ -767,7 +1070,7 @@ local function updateNpcEsp()
             if not npc:FindFirstChild("NpcHighlight") then
                 local h = Instance.new("Highlight", npc)
                 h.Name = "NpcHighlight"
-                h.FillColor = Color3.new(1, 0, 0)
+                h.FillColor = Color3.fromRGB(255, 80, 80)
                 h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
             end
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -775,7 +1078,7 @@ local function updateNpcEsp()
                 local ok, dist = pcall(function()
                     return (root.Position - npc:GetModelCFrame().Position).Magnitude
                 end)
-                npc.NpcHighlight.Enabled = _G.NpcEsp and ok and dist <= _G.NpcEspMaxDist
+                npc.NpcHighlight.Enabled = State.NpcEsp and ok and dist <= State.NpcEspMaxDist
             else
                 npc.NpcHighlight.Enabled = false
             end
@@ -783,7 +1086,6 @@ local function updateNpcEsp()
     end
 end
 
--- ORE VISUALS
 local function applyOreVisuals(obj, name, color)
     if not obj:FindFirstChild("OreHighlight") then
         local h = Instance.new("Highlight", obj)
@@ -791,20 +1093,22 @@ local function applyOreVisuals(obj, name, color)
         h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     end
     if not obj:FindFirstChild("OreTag") then
-        local bg = Instance.new("BillboardGui", obj)
-        bg.Name, bg.AlwaysOnTop, bg.Size = "OreTag", true, UDim2.new(0, 100, 0, 40)
-        bg.ExtentsOffset = Vector3.new(0, 2, 0)
-        local lbl = Instance.new("TextLabel", bg)
-        lbl.Name = "Label"
-        lbl.BackgroundTransparency, lbl.Size, lbl.TextSize = 1, UDim2.new(1, 0, 1, 0), 13
-        lbl.TextColor3 = Color3.new(1, 1, 1)
-        lbl.Font = Enum.Font.GothamBold
-        lbl.TextStrokeTransparency = 0
+        local bg = new("BillboardGui", {
+            Name = "OreTag", AlwaysOnTop = true,
+            Size = UDim2.new(0, 100, 0, 40),
+            ExtentsOffset = Vector3.new(0, 2, 0)
+        }, obj)
+        new("TextLabel", {
+            Name = "Label", BackgroundTransparency = 1,
+            Size = UDim2.new(1, 0, 1, 0), TextSize = 13,
+            TextColor3 = Color3.new(1, 1, 1),
+            Font = Enum.Font.Code, TextStrokeTransparency = 0
+        }, bg)
     end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if root then
         local dist = math.floor((root.Position - obj.Position).Magnitude)
-        if dist <= _G.OreEspMaxDist then
+        if dist <= State.OreEspMaxDist then
             obj.OreTag.Enabled, obj.OreHighlight.Enabled = true, true
             obj.OreTag.Label.Text = name:upper() .. "\n[" .. dist .. "m]"
             obj.OreTag.Label.TextColor3 = color
@@ -815,30 +1119,30 @@ local function applyOreVisuals(obj, name, color)
     end
 end
 
--- ============ RENDER: WORLD OBJECTS ============
+-- ============================================================
+--  RENDER: мир
+-- ============================================================
 RunService.RenderStepped:Connect(function()
     pcall(function()
         updateNpcEsp()
 
-        -- Legit Speed
-        if _G.LegitSpeed then
+        if State.LegitSpeed then
             local char = LocalPlayer.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
             local hum = char and char:FindFirstChildOfClass("Humanoid")
             if root and hum and hum.MoveDirection.Magnitude > 0 then
-                root.CFrame = root.CFrame + (hum.MoveDirection * (_G.SpeedMultiplier / 10))
+                root.CFrame = root.CFrame + (hum.MoveDirection * (State.SpeedMultiplier / 10))
             end
         end
 
-        -- Ores
         local ores = workspace:FindFirstChild("ores")
         if ores then
-            for _, ore in pairs(ores:GetChildren()) do
-                local en = (ore.Name == "sulfur" and _G.SulfurEsp)
-                        or (ore.Name == "iron" and _G.IronEsp)
-                        or (ore.Name == "stone" and _G.StoneEsp)
+            for _, ore in ipairs(ores:GetChildren()) do
+                local en = (ore.Name == "sulfur" and State.SulfurEsp)
+                        or (ore.Name == "iron"   and State.IronEsp)
+                        or (ore.Name == "stone"  and State.StoneEsp)
                 local col = (ore.Name == "sulfur" and Color3.new(1, 1, 0))
-                         or (ore.Name == "iron" and Color3.fromRGB(180, 180, 180))
+                         or (ore.Name == "iron"   and Color3.fromRGB(180, 180, 180))
                          or Color3.fromRGB(220, 220, 220)
                 if en then
                     applyOreVisuals(ore, ore.Name, col)
@@ -848,15 +1152,14 @@ RunService.RenderStepped:Connect(function()
             end
         end
 
-        -- Crates
         local crates = workspace:FindFirstChild("Crates")
         if crates then
-            for _, crate in pairs(crates:GetChildren()) do
+            for _, crate in ipairs(crates:GetChildren()) do
                 local en, col = false, Color3.new(1, 1, 1)
-                if crate.Name == "Crate" then en = _G.CrateEsp; col = Color3.fromRGB(180, 130, 60)
-                elseif crate.Name == "MilitaryCrate" then en = _G.MilitaryEsp; col = Color3.fromRGB(0, 180, 0)
-                elseif crate.Name == "EliteCrate" then en = _G.EliteEsp; col = Color3.fromRGB(255, 60, 90)
-                elseif crate.Name == "FoodBox" or crate.Name == "ToolBox" then en = _G.FoodEsp; col = Color3.fromRGB(0, 200, 255)
+                if crate.Name == "Crate" then en = State.CrateEsp; col = Color3.fromRGB(180, 130, 60)
+                elseif crate.Name == "MilitaryCrate" then en = State.CrateEsp; col = Color3.fromRGB(0, 180, 0)
+                elseif crate.Name == "EliteCrate" then en = State.CrateEsp; col = Color3.fromRGB(255, 60, 90)
+                elseif crate.Name == "FoodBox" or crate.Name == "ToolBox" then en = State.CrateEsp; col = Color3.fromRGB(0, 200, 255)
                 end
                 if en then
                     applyCrateVisuals(crate, crate.Name, col)
@@ -866,8 +1169,7 @@ RunService.RenderStepped:Connect(function()
             end
         end
 
-        -- FullBright
-        if _G.FullBright then
+        if State.FullBright then
             Lighting.Ambient = Color3.new(1, 1, 1)
             Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
             Lighting.Brightness = 2
@@ -876,25 +1178,23 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
--- ============ AIMBOT ============
+-- ============================================================
+--  AIMBOT
+-- ============================================================
 local function getClosest()
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local target, mag = nil, math.huge
-    for _, v in pairs(Players:GetPlayers()) do
-        if v.Character and v.Character:FindFirstChild("Head") and v ~= LocalPlayer then
-            if _G.TeamCheck and v.Team == LocalPlayer.Team then
-                -- skip
-            else
+    for _, v in ipairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer and v.Character and v.Character:FindFirstChild("Head") then
+            if not (State.TeamCheck and v.Team == LocalPlayer.Team) then
                 local hum = v.Character:FindFirstChildOfClass("Humanoid")
                 if hum and hum.Health > 0 then
                     local head = v.Character.Head
-                    local screenPos, onScreen = Camera:WorldToViewportPoint(head.Position)
-                    if onScreen then
-                        local dist = (Vector2.new(screenPos.X, screenPos.Y) - center).Magnitude
-                        if dist < mag and dist < _G.AimFOV then
-                            if isVisible(head) then
-                                mag, target = dist, head
-                            end
+                    local sp, on = Camera:WorldToViewportPoint(head.Position)
+                    if on then
+                        local dist = (Vector2.new(sp.X, sp.Y) - center).Magnitude
+                        if dist < mag and dist < State.AimFOV and isVisible(head) then
+                            mag, target = dist, head
                         end
                     end
                 end
@@ -904,259 +1204,343 @@ local function getClosest()
     return target
 end
 
--- ============ ESP DRAWING ============
+-- ============================================================
+--  ESP (Drawing API)
+-- ============================================================
 local espElements = {}
 local FOVring = nil
 
 if hasDrawing then
     local function createESP(p)
-        if p == LocalPlayer then return end
-        if espElements[p] then return end
+        if p == LocalPlayer or espElements[p] then return end
         local ok, d = pcall(function()
             return {
-                box = {Drawing.new("Line"), Drawing.new("Line"), Drawing.new("Line"), Drawing.new("Line")},
-                hp  = {Drawing.new("Line"), Drawing.new("Line")},
-                tracer = Drawing.new("Line"),
-                text   = Drawing.new("Text")
+                box     = {Drawing.new("Line"), Drawing.new("Line"), Drawing.new("Line"), Drawing.new("Line")},
+                hpBg    = Drawing.new("Line"),
+                hpFill  = Drawing.new("Line"),
+                hpText  = Drawing.new("Text"),
+                name    = Drawing.new("Text"),
+                dist    = Drawing.new("Text"),
+                inv     = Drawing.new("Text"),
+                tracer  = Drawing.new("Line"),
+                head    = Drawing.new("Circle"),
+                bone1   = Drawing.new("Line"),
+                bone2   = Drawing.new("Line"),
+                bone3   = Drawing.new("Line"),
+                bone4   = Drawing.new("Line")
             }
         end)
         if not ok or not d then return end
-        for _, l in pairs(d.box) do
+
+        for _, l in ipairs(d.box) do
             l.Thickness, l.Color, l.Visible = 1, Colors.Accent, false
         end
+        d.hpBg.Thickness, d.hpBg.Color, d.hpBg.Visible = 3, Color3.new(0, 0, 0), false
+        d.hpFill.Thickness, d.hpFill.Visible = 3, false
+        d.hpText.Size, d.hpText.Center, d.hpText.Outline = 12, true, true
+        d.hpText.Font, d.hpText.Color = 2, Colors.Text
+        d.name.Size, d.name.Center, d.name.Outline = 13, true, true
+        d.name.Font, d.name.Color = 2, Colors.Text
+        d.dist.Size, d.dist.Center, d.dist.Outline = 11, true, true
+        d.dist.Font, d.dist.Color = 2, Colors.SubText
+        d.inv.Size, d.inv.Center, d.inv.Outline = 11, true, true
+        d.inv.Font, d.inv.Color = 2, Colors.Accent
         d.tracer.Thickness, d.tracer.Color = 1, Colors.Main
-        d.hp[1].Thickness, d.hp[1].Color = 2, Color3.new(0, 0, 0)
-        d.hp[2].Thickness = 2
-        d.text.Size, d.text.Center, d.text.Outline = 14, true, true
-        d.text.Color = Colors.Text
+        d.head.Thickness, d.head.NumSides, d.head.Filled, d.head.Transparency = 2, 24, false, 1
+        for _, b in ipairs({d.bone1, d.bone2, d.bone3, d.bone4}) do
+            b.Thickness, b.Color = 1, Colors.Accent
+        end
         espElements[p] = d
     end
 
     pcall(function()
         FOVring = Drawing.new("Circle")
-        FOVring.Thickness, FOVring.Color, FOVring.Transparency, FOVring.NumSides = 1, Colors.Main, 1, 60
+        FOVring.Thickness, FOVring.Color, FOVring.Transparency, FOVring.NumSides = 1, Colors.Main, 1, 64
         FOVring.Visible = false
     end)
 
-    -- Render loop ESP + aimbot
     RunService.RenderStepped:Connect(function()
         pcall(function()
-            -- FOV ring
+            -- FOV
             if FOVring then
-                FOVring.Visible = _G.AimEnabled
-                if _G.AimEnabled then
-                    FOVring.Radius = _G.AimFOV
+                FOVring.Visible = State.AimEnabled
+                if State.AimEnabled then
+                    FOVring.Radius = State.AimFOV
                     FOVring.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
                     FOVring.Color = Colors.Main
-
                     local isAiming = (not isMobile and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)) or isMobile
                     if isAiming then
-                        local t = getClosest()
-                        if t then
-                            Camera.CFrame = Camera.CFrame:Lerp(CFrame.new(Camera.CFrame.Position, t.Position), _G.AimSmooth)
+                        local tgt = getClosest()
+                        if tgt then
+                            Camera.CFrame = Camera.CFrame:Lerp(
+                                CFrame.new(Camera.CFrame.Position, tgt.Position),
+                                State.AimSmooth)
                         end
                     end
                 end
             end
 
-            -- Player ESP
             for p, d in pairs(espElements) do
                 local c = p.Character
                 local r = c and c:FindFirstChild("HumanoidRootPart")
                 local h = c and c:FindFirstChildOfClass("Humanoid")
+                local head = c and c:FindFirstChild("Head")
 
                 local shouldDraw = false
 
                 if c and r and h and h.Health > 0 then
-                    local ps, v = Camera:WorldToViewportPoint(r.Position)
+                    local ps, on = Camera:WorldToViewportPoint(r.Position)
                     local realDist = ps.Z
-                    if v and realDist <= _G.PlayerEspMaxDist then
+                    if on and realDist <= State.PlayerEspMaxDist then
                         shouldDraw = true
                         local sy = 4500 / realDist
                         local sx = 2800 / realDist
                         local x, y = ps.X - sx / 2, ps.Y - sy / 2
 
-                        for i, l in pairs(d.box) do
-                            l.Visible = _G.EspBoxes
+                        -- BOX
+                        for i, l in ipairs(d.box) do
+                            l.Visible = State.EspBoxes
                             l.Color = Colors.Accent
-                            if i == 1 then
-                                l.From, l.To = Vector2.new(x, y), Vector2.new(x + sx, y)
-                            elseif i == 2 then
-                                l.From, l.To = Vector2.new(x + sx, y), Vector2.new(x + sx, y + sy)
-                            elseif i == 3 then
-                                l.From, l.To = Vector2.new(x + sx, y + sy), Vector2.new(x, y + sy)
+                            if i == 1 then l.From, l.To = Vector2.new(x, y),        Vector2.new(x + sx, y)
+                            elseif i == 2 then l.From, l.To = Vector2.new(x + sx, y), Vector2.new(x + sx, y + sy)
+                            elseif i == 3 then l.From, l.To = Vector2.new(x + sx, y + sy), Vector2.new(x, y + sy)
+                            else l.From, l.To = Vector2.new(x, y + sy), Vector2.new(x, y) end
+                        end
+
+                        -- HP bar (слева от бокса)
+                        local hpRatio = math.clamp(h.Health / math.max(h.MaxHealth, 1), 0, 1)
+                        d.hpBg.Visible, d.hpFill.Visible = State.EspHP, State.EspHP
+                        if State.EspHP then
+                            d.hpBg.From   = Vector2.new(x - 8, y)
+                            d.hpBg.To     = Vector2.new(x - 8, y + sy)
+                            d.hpFill.From = Vector2.new(x - 8, y + sy)
+                            d.hpFill.To   = Vector2.new(x - 8, y + sy - sy * hpRatio)
+                            d.hpFill.Color = Color3.fromRGB(255 * (1 - hpRatio), 255 * hpRatio, 60)
+                        end
+
+                        -- HP number
+                        d.hpText.Visible = State.EspHPNum
+                        if State.EspHPNum then
+                            d.hpText.Text = math.floor(h.Health) .. " / " .. math.floor(h.MaxHealth)
+                            d.hpText.Position = Vector2.new(ps.X, y + sy + 4)
+                            d.hpText.Color = Colors.Text
+                        end
+
+                        -- NAME
+                        d.name.Visible = State.EspNames
+                        if State.EspNames then
+                            d.name.Text = p.DisplayName .. " (@" .. p.Name .. ")"
+                            d.name.Position = Vector2.new(ps.X, y - 34)
+                            d.name.Color = Colors.Text
+                        end
+
+                        -- DIST
+                        d.dist.Visible = State.EspDist
+                        if State.EspDist then
+                            d.dist.Text = "[" .. math.floor(realDist) .. "m]"
+                            d.dist.Position = Vector2.new(ps.X, y - 18)
+                            d.dist.Color = Colors.SubText
+                        end
+
+                        -- INVENTORY
+                        d.inv.Visible = State.EspInv
+                        if State.EspInv then
+                            local inv = getPlayerInventoryText(p)
+                            if inv then
+                                d.inv.Text = "INV:\n" .. inv
+                                d.inv.Position = Vector2.new(ps.X, y + sy + 22)
+                                d.inv.Color = Colors.Accent
                             else
-                                l.From, l.To = Vector2.new(x, y + sy), Vector2.new(x, y)
+                                d.inv.Text = "INV: пусто"
+                                d.inv.Position = Vector2.new(ps.X, y + sy + 22)
+                                d.inv.Color = Colors.SubText
                             end
                         end
 
-                        d.tracer.Visible = _G.EspTracers
-                        d.tracer.Color = Colors.Main
-                        if _G.EspTracers then
+                        -- TRACER
+                        d.tracer.Visible = State.EspTracers
+                        if State.EspTracers then
+                            d.tracer.Color = Colors.Main
                             d.tracer.From = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y)
-                            d.tracer.To = Vector2.new(ps.X, ps.Y)
+                            d.tracer.To   = Vector2.new(ps.X, ps.Y)
                         end
 
-                        d.text.Visible = (_G.EspNames or _G.EspDist)
-                        d.text.Color = Colors.Text
-                        d.text.Text = (_G.EspNames and p.Name or "") .. (_G.EspDist and (" [" .. math.floor(realDist) .. "m]") or "")
-                        d.text.Position = Vector2.new(ps.X, y - 15)
+                        -- HEAD CIRCLE
+                        d.head.Visible = State.EspHead
+                        if State.EspHead and head then
+                            local hps, hon = Camera:WorldToViewportPoint(head.Position)
+                            if hon then
+                                d.head.Position = Vector2.new(hps.X, hps.Y)
+                                d.head.Radius = 10
+                                d.head.Color = Colors.Accent
+                            else
+                                d.head.Visible = false
+                            end
+                        end
 
-                        d.hp[1].Visible, d.hp[2].Visible = _G.EspHP, _G.EspHP
-                        if _G.EspHP then
-                            local hp_val = h.Health / h.MaxHealth
-                            d.hp[1].From, d.hp[1].To = Vector2.new(x - 5, y + sy), Vector2.new(x - 5, y)
-                            d.hp[2].From, d.hp[2].To = Vector2.new(x - 5, y + sy), Vector2.new(x - 5, y + sy - (sy * hp_val))
-                            d.hp[2].Color = Color3.fromHSV(hp_val * 0.3, 1, 1)
+                        -- SKELETON (упрощённый)
+                        local skelVisible = State.EspSkeleton
+                        d.bone1.Visible, d.bone2.Visible, d.bone3.Visible, d.bone4.Visible =
+                            skelVisible, skelVisible, skelVisible, skelVisible
+                        if skelVisible then
+                            local larm = c:FindFirstChild("Left Arm") or c:FindFirstChild("LeftHand")
+                            local rarm = c:FindFirstChild("Right Arm") or c:FindFirstChild("RightHand")
+                            local lleg = c:FindFirstChild("Left Leg") or c:FindFirstChild("LeftFoot")
+                            local rleg = c:FindFirstChild("Right Leg") or c:FindFirstChild("RightFoot")
+                            local color = Colors.Accent
+                            d.bone1.Color, d.bone2.Color, d.bone3.Color, d.bone4.Color = color, color, color, color
+                            local function to2d(part)
+                                if not part then return nil end
+                                local sp, on2 = Camera:WorldToViewportPoint(part.Position)
+                                if on2 then return Vector2.new(sp.X, sp.Y) end
+                                return nil
+                            end
+                            local hrp2d = to2d(r)
+                            if larm and hrp2d then d.bone1.From, d.bone1.To = hrp2d, to2d(larm) or hrp2d end
+                            if rarm and hrp2d then d.bone2.From, d.bone2.To = hrp2d, to2d(rarm) or hrp2d end
+                            if lleg and hrp2d then d.bone3.From, d.bone3.To = hrp2d, to2d(lleg) or hrp2d end
+                            if rleg and hrp2d then d.bone4.From, d.bone4.To = hrp2d, to2d(rleg) or hrp2d end
                         end
                     end
                 end
 
                 if not shouldDraw then
-                    for _, l in pairs(d.box) do l.Visible = false end
-                    d.tracer.Visible, d.text.Visible, d.hp[1].Visible, d.hp[2].Visible = false, false, false, false
+                    for _, l in ipairs(d.box) do l.Visible = false end
+                    d.hpBg.Visible, d.hpFill.Visible, d.hpText.Visible = false, false, false
+                    d.name.Visible, d.dist.Visible, d.inv.Visible = false, false, false
+                    d.tracer.Visible, d.head.Visible = false, false
+                    d.bone1.Visible, d.bone2.Visible, d.bone3.Visible, d.bone4.Visible = false, false, false, false
                 end
             end
         end)
     end)
 
-    -- Player add/remove
-    Players.PlayerAdded:Connect(function(p)
-        task.wait(1)
-        createESP(p)
-    end)
+    Players.PlayerAdded:Connect(function(p) task.wait(1); createESP(p) end)
     Players.PlayerRemoving:Connect(function(p)
-        if espElements[p] then
+        local d = espElements[p]
+        if d then
             pcall(function()
-                for _, l in pairs(espElements[p].box) do l:Remove() end
-                espElements[p].tracer:Remove()
-                espElements[p].text:Remove()
-                espElements[p].hp[1]:Remove()
-                espElements[p].hp[2]:Remove()
+                for _, l in ipairs(d.box) do l:Remove() end
+                d.hpBg:Remove(); d.hpFill:Remove(); d.hpText:Remove()
+                d.name:Remove(); d.dist:Remove(); d.inv:Remove()
+                d.tracer:Remove(); d.head:Remove()
+                d.bone1:Remove(); d.bone2:Remove(); d.bone3:Remove(); d.bone4:Remove()
             end)
             espElements[p] = nil
         end
     end)
-    for _, p in pairs(Players:GetPlayers()) do createESP(p) end
+    for _, p in ipairs(Players:GetPlayers()) do createESP(p) end
 end
 
--- ============ INFINITE JUMP ============
+-- ============================================================
+--  INFINITE JUMP
+-- ============================================================
 UserInputService.JumpRequest:Connect(function()
-    if _G.InfJump and LocalPlayer.Character then
+    if State.InfJump and LocalPlayer.Character then
         local hum = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
         if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
--- ============ OPEN HOTKEY ============
+-- ============================================================
+--  HOTKEY
+-- ============================================================
 UserInputService.InputBegan:Connect(function(input, processed)
     if processed then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then
-        toggleMenu()
-    end
+    if input.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
 end)
 
--- ============ СТАРТОВАЯ ВКЛАДКА ============
-showTab("ESP")
-if tabButtons.ESP then
-    tabButtons.ESP.TextColor3 = Colors.Main
-    tabButtons.ESP.BackgroundColor3 = Color3.fromRGB(35, 38, 50)
-end
+-- ============================================================
+--  СТАРТОВАЯ ВКЛАДКА
+-- ============================================================
+showTab("VISUALS")
 
--- ============ WATERMARK ============
-local onlineUsers = math.random(140, 180)
+-- ============================================================
+--  WATERMARK
+-- ============================================================
+local onlineUsers = math.random(180, 240)
 task.spawn(function()
-    while true do
-        task.wait(20)
-        onlineUsers = onlineUsers + math.random(-2, 3)
-    end
+    while true do task.wait(20); onlineUsers = onlineUsers + math.random(-2, 3) end
 end)
 
-local Watermark = Instance.new("ScreenGui")
-Watermark.Name = "NyzeRustWatermark"
-Watermark.ResetOnSpawn = false
-Watermark.IgnoreGuiInset = true
-local wmOk = pcall(function() Watermark.Parent = CoreGui end)
-if not wmOk or not Watermark.Parent then
-    Watermark.Parent = LocalPlayer:WaitForChild("PlayerGui")
-end
+local WM = new("ScreenGui", {
+    Name = "NyzeRustWM",
+    ResetOnSpawn = false,
+    IgnoreGuiInset = true
+}, SG)
+pcall(function() WM.Parent = CoreGui end)
+if not WM.Parent then WM.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
-local WFrame = Instance.new("Frame", Watermark)
+local WFrame = new("Frame", {
+    BackgroundColor3 = Colors.Background,
+    BackgroundTransparency = 0.15,
+    Position = UDim2.new(0, 12, 0, 12),
+    Size = UDim2.new(0, 240, 0, 130),
+    BorderSizePixel = 0
+}, WM)
 _G.WFrame = WFrame
-WFrame.BackgroundColor3 = Colors.Background
-WFrame.BackgroundTransparency = 0.15
-WFrame.Position = UDim2.new(0, 12, 0, 12)
-WFrame.Size = UDim2.new(0, 230, 0, 120)
-WFrame.BorderSizePixel = 0
-corner(WFrame, 10)
+corner(WFrame, 4)
 
-local WStroke = Instance.new("UIStroke", WFrame)
+local WStroke = stroke(WFrame, Colors.Main, 1.5, 0.2)
 _G.WStroke = WStroke
-WStroke.Color = Colors.Stroke
-WStroke.Thickness = 1.5
-WStroke.Transparency = 0.2
 
-local WLabel = Instance.new("TextLabel", WFrame)
-WLabel.Size = UDim2.new(1, -20, 1, -16)
-WLabel.Position = UDim2.new(0, 12, 0, 8)
-WLabel.BackgroundTransparency = 1
-WLabel.TextColor3 = Colors.Text
-WLabel.Font = Enum.Font.GothamMedium
-WLabel.TextSize = 12
-WLabel.RichText = true
-WLabel.TextXAlignment = Enum.TextXAlignment.Left
-WLabel.TextYAlignment = Enum.TextYAlignment.Top
+-- пиксель-полоска сверху watermark
+pixelFrame(WFrame, Colors.Main, UDim2.new(1, 0, 0, 3), UDim2.new(0, 0, 0, 0), 5)
 
-local lastIteration = tick()
-local frameCount = 0
-local fps = 0
+local WLabel = new("TextLabel", {
+    Size = UDim2.new(1, -20, 1, -16),
+    Position = UDim2.new(0, 12, 0, 8),
+    BackgroundTransparency = 1,
+    TextColor3 = Colors.Text,
+    Font = Enum.Font.Code,
+    TextSize = 12,
+    RichText = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top
+}, WFrame)
+
+local lastT = tick(); local frames = 0; local fps = 0
 
 RunService.RenderStepped:Connect(function()
     pcall(function()
-        frameCount = frameCount + 1
-        if tick() - lastIteration >= 1 then
-            fps = frameCount
-            frameCount = 0
-            lastIteration = tick()
-        end
-
+        frames = frames + 1
+        if tick() - lastT >= 1 then fps = frames; frames = 0; lastT = tick() end
         local ping = 0
-        pcall(function()
-            ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())
-        end)
+        pcall(function() ping = math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) end)
 
-        local text = "<font color='#" .. Colors.Main:ToHex() .. "'>NyzeRust</font> v1.0\n"
-        text = text .. "ONLINE: <font color='#" .. Colors.Accent:ToHex() .. "'>" .. onlineUsers .. "</font>\n"
-        text = text .. "FPS: <font color='#" .. Colors.Accent:ToHex() .. "'>" .. fps .. "</font>  |  PING: <font color='#" .. Colors.Accent:ToHex() .. "'>" .. ping .. "ms</font>\n"
-        text = text .. "MENU: [<font color='#" .. Colors.Secondary:ToHex() .. "'>RSHIFT</font>]\n"
-        text = text .. "<font color='#" .. Colors.Stroke:ToHex() .. "'>----------------------------</font>\n"
+        local txt = "<font color='#" .. Colors.Main:ToHex() .. "'>NyzeRust</font> v2.0\n"
+        txt = txt .. t("online") .. ": <font color='#" .. Colors.Accent:ToHex() .. "'>" .. onlineUsers .. "</font>\n"
+        txt = txt .. t("fps") .. ": <font color='#" .. Colors.Accent:ToHex() .. "'>" .. fps ..
+              "</font>  |  " .. t("ping") .. ": <font color='#" .. Colors.Accent:ToHex() .. "'>" .. ping .. "ms</font>\n"
+        txt = txt .. t("menu_hint") .. "\n"
+        txt = txt .. "<font color='#" .. Colors.Stroke:ToHex() .. "'>────────────────────</font>\n"
 
         local bindCount = 0
         for prop, key in pairs(_G.NyzeBinds) do
             if key then
                 bindCount = bindCount + 1
-                local status = _G[prop] and "<font color='#22DD66'>ON</font>" or "<font color='#DD4466'>OFF</font>"
-                text = text .. "• " .. prop .. " [" .. key.Name .. "] " .. status .. "\n"
+                local on = State[prop]
+                local stat = on and "<font color='#22DD66'>ON</font>"
+                            or  "<font color='#DD4466'>OFF</font>"
+                txt = txt .. "• " .. prop .. " [" .. key.Name .. "] " .. stat .. "\n"
             end
         end
-        if bindCount == 0 then
-            text = text .. "<font color='#666666'>no binds</font>"
-        end
+        if bindCount == 0 then txt = txt .. "<font color='#666666'>" .. t("no_binds") .. "</font>" end
 
-        WLabel.Text = text
-
-        local base = 110
-        WFrame.Size = UDim2.new(0, 230, 0, bindCount == 0 and base or (base - 15) + (bindCount * 15))
+        WLabel.Text = txt
+        WFrame.Size = UDim2.new(0, 240, 0, bindCount == 0 and 118 or (110 - 15) + bindCount * 15)
     end)
 end)
 
--- ============ УВЕДОМЛЕНИЕ ============
+-- ============================================================
+--  NOTIFICATION
+-- ============================================================
 pcall(function()
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "NyzeRust",
-        Text = "Loaded successfully • RSHIFT to open",
+    StarterGui:SetCore("SendNotification", {
+        Title = "NyzeRust v2.0",
+        Text = LANG == "RU" and "Загружено • RSHIFT чтобы открыть" or "Loaded • RSHIFT to open",
         Duration = 4
     })
 end)
 
-print("[NyzeRust] Загружен успешно. Нажми RSHIFT чтобы открыть меню.")
+print("[NyzeRust v2.0] Загружен. Нажми RSHIFT чтобы открыть меню.")
