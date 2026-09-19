@@ -1,7 +1,7 @@
 --[[
-    NyzeRust v3.6 — "Pure Black" Edition
-    Pure Black UI • Wall X-Ray • 3rd Person • FPS Booster
-    ESP + INV + Icons • Aimbot + Auto-Shoot • Lock Auto-Code
+    NyzeRust v3.7 — "Pure Black" Edition
+    Fixed Aimbot • Free Mouse in Menu • Wall X-Ray
+    3rd Person • FPS Booster • ESP+INV+Icons • Auto-Shoot
 --]]
 
 -- ============================================================
@@ -19,6 +19,7 @@ local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
 local Camera      = workspace.CurrentCamera
+local Mouse       = LocalPlayer:GetMouse()
 local isMobile    = UserInputService.TouchEnabled
 
 -- ============================================================
@@ -57,8 +58,8 @@ local State = {
     EspHead = false,
     PlayerEspMaxDist = 800,
     AimEnabled = false, TeamCheck = false, WallCheck = true,
-    AimSmooth = 0.15, AimFOV = 120, NoBulletDrop = false,
-    AutoShoot = false, AutoShootDelay = 0.08,
+    AimSmooth = 0.08, AimFOV = 120, NoBulletDrop = false,
+    AutoShoot = false, AutoShootDelay = 0.05,
     LegitSpeed = false, SpeedMultiplier = 1.5,
     InfJump = false, FreecamEnabled = false, FreecamSpeed = 1,
     FullBright = false, SulfurEsp = false, IronEsp = false,
@@ -77,6 +78,8 @@ local State = {
     OptLowTerrain  = false,
     OptNoSounds    = false,
     OptRenderDist  = 1500,
+    -- Новая: свободная мышь
+    FreeMouse      = true,
 }
 _G.NyzeState = State
 _G.NyzeBinds = {}
@@ -254,7 +257,7 @@ new("TextLabel", {
 new("TextLabel", {
     Size = UDim2.new(1, -120, 0, 16),
     Position = UDim2.new(0, 72, 0, 34),
-    BackgroundTransparency = 1, Text = "Pure Black • v3.6  •  RSHIFT",
+    BackgroundTransparency = 1, Text = "Pure Black • v3.7  •  RSHIFT",
     TextColor3 = Colors.SubText, Font = Enum.Font.Code,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left
 }, TitleBar)
@@ -503,6 +506,7 @@ createSlider("Дистанция ящиков",    "CrateEspMaxDist", 50, 3000, 
 
 createCategory("РАЗНОЕ", nextO())
 createToggle("Автоввод кода на замках", "LockAutoCode", nextO())
+createToggle("Свободная мышь в меню",   "FreeMouse",    nextO())
 
 createCategory("ОПТИМИЗАЦИЯ", nextO())
 createToggle("Low GFX (всё сразу)",    "OptLowGFX",       nextO())
@@ -516,14 +520,33 @@ createToggle("Убрать звуки",           "OptNoSounds",     nextO())
 createSlider("Дальность прорисовки",   "OptRenderDist",   100, 5000, nextO())
 
 -- ============================================================
---  TOGGLE MENU
+--  TOGGLE MENU (с фиксом свободной мыши)
 -- ============================================================
 local menuToggled = false
+
+local function setMouseFree(free)
+    pcall(function()
+        if free then
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+            UserInputService.MouseIconEnabled = true
+        else
+            -- Не трогаем — игра сама решает
+        end
+    end)
+end
+
 function toggleMenu()
     menuToggled = not menuToggled
     if menuToggled then
         M.Visible = true
-        if not isMobile then UserInputService.MouseIconEnabled = true end
+        if not isMobile then
+            -- Освобождаем мышь
+            if State.FreeMouse then
+                setMouseFree(true)
+            else
+                UserInputService.MouseIconEnabled = true
+            end
+        end
         TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 12}):Play()
         local target = isMobile
             and UDim2.new(0.5, -250, 0.5, -190)
@@ -531,7 +554,9 @@ function toggleMenu()
         TweenService:Create(M, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out),
             {Position = target}):Play()
     else
-        if not isMobile then UserInputService.MouseIconEnabled = false end
+        if not isMobile then
+            UserInputService.MouseIconEnabled = false
+        end
         TweenService:Create(Blur, TweenInfo.new(0.3), {Size = 0}):Play()
         local target = isMobile
             and UDim2.new(0.5, -250, 0, -400)
@@ -544,6 +569,33 @@ function toggleMenu()
         end)
     end
 end
+
+-- ============================================================
+--  ФИКС СВОБОДНОЙ МЫШИ (постоянная проверка)
+-- ============================================================
+-- Пока меню открыто — держим мышь свободной
+RunService.RenderStepped:Connect(function()
+    if menuToggled and State.FreeMouse and not isMobile then
+        pcall(function()
+            -- Если игра попыталась захватить мышь — возвращаем
+            if UserInputService.MouseBehavior ~= Enum.MouseBehavior.Default then
+                UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+            end
+            if not UserInputService.MouseIconEnabled then
+                UserInputService.MouseIconEnabled = true
+            end
+        end)
+    end
+end)
+
+-- Также слушаем смену поведения — если игра меняет, возвращаем
+UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
+    if menuToggled and State.FreeMouse and not isMobile then
+        pcall(function()
+            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+        end)
+    end
+end)
 
 -- ============================================================
 --  МОБИЛЬНАЯ КНОПКА
@@ -612,7 +664,7 @@ end
 local segFpsVal  = makeSeg("0", Colors.Accent, 5)
 local segPingVal = makeSeg("0ms", Colors.Accent, 8)
 makeSeg("NyzeRust", Colors.Accent, 1)
-makeSeg("v3.6", Colors.SubText, 2)
+makeSeg("v3.7", Colors.SubText, 2)
 makeSeg("|", Colors.Stroke, 3)
 makeSeg("FPS:", Colors.SubText, 4)
 makeSeg("|", Colors.Stroke, 6)
@@ -694,10 +746,17 @@ local function isVisible(targetPart, targetChar)
 end
 
 -- ============================================================
---  X-RAY WALLS (прозрачные стены — видно игроков сквозь них)
+--  X-RAY (стены + ящики + шкафы)
 -- ============================================================
-local xrayWallOriginals = {}
+local xrayOriginals = {}
 local xrayApplied = false
+
+local XRayKeywords = {
+    "wall", "стена",
+    "crate", "chest", "box", "ящик", "сундук",
+    "cabinet", "locker", "closet", "wardrobe", "шкаф", "сейф",
+    "fridge", "safe", "drawer", "container", "storage"
+}
 
 local function isCharacterPart(part)
     local parent = part.Parent
@@ -716,7 +775,7 @@ local function applyXRayWalls()
         xrayApplied = true
         for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("BasePart") and not isCharacterPart(obj) then
-                xrayWallOriginals[obj] = {
+                xrayOriginals[obj] = {
                     transparency = obj.Transparency,
                     ltm = obj.LocalTransparencyModifier
                 }
@@ -724,14 +783,14 @@ local function applyXRayWalls()
             elseif obj:IsA("Decal") or obj:IsA("Texture") then
                 local part = obj.Parent
                 if part and not (part:IsA("BasePart") and isCharacterPart(part)) then
-                    xrayWallOriginals[obj] = {transparency = obj.Transparency}
+                    xrayOriginals[obj] = {transparency = obj.Transparency}
                     obj.Transparency = 0.85
                 end
             end
         end
     elseif not State.XRay and xrayApplied then
         xrayApplied = false
-        for obj, orig in pairs(xrayWallOriginals) do
+        for obj, orig in pairs(xrayOriginals) do
             pcall(function()
                 if obj and obj.Parent then
                     if obj:IsA("BasePart") then
@@ -742,19 +801,18 @@ local function applyXRayWalls()
                 end
             end)
         end
-        xrayWallOriginals = {}
+        xrayOriginals = {}
     end
 end
 
--- Цикл обновления X-Ray (если карта подгружается — новые стены тоже становятся прозрачными)
 task.spawn(function()
     while true do
         task.wait(3)
         if State.XRay then
             for _, obj in ipairs(workspace:GetDescendants()) do
                 if obj:IsA("BasePart") and not isCharacterPart(obj) then
-                    if xrayWallOriginals[obj] == nil then
-                        xrayWallOriginals[obj] = {
+                    if xrayOriginals[obj] == nil then
+                        xrayOriginals[obj] = {
                             transparency = obj.Transparency,
                             ltm = obj.LocalTransparencyModifier
                         }
@@ -1086,7 +1144,7 @@ local function applyOptimizations()
         pcall(function() settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end)
         pcall(function()
             Lighting.GlobalShadows = false
-            Lighting.ShadowSoftness = 0
+            Lighting.Softness = 0
         end)
     end
 end
@@ -1164,7 +1222,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ============================================================
---  AIMBOT + AUTO-SHOOT
+--  AIMBOT (жёсткая наводка в голову)
 -- ============================================================
 local function getClosest()
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -1191,6 +1249,16 @@ local function getClosest()
     return target
 end
 
+-- Жёсткая наводка
+local function aimAt(targetPart)
+    if not targetPart then return end
+    -- Наводимся из позиции камеры прямо в голову
+    local aimPos = targetPart.Position
+    local newCFrame = CFrame.new(Camera.CFrame.Position, aimPos)
+    local alpha = 1 - State.AimSmooth
+    Camera.CFrame = Camera.CFrame:Lerp(newCFrame, alpha)
+end
+
 local lastShoot = 0
 local function tryAutoShoot(target)
     if not State.AutoShoot then return end
@@ -1204,6 +1272,23 @@ local function tryAutoShoot(target)
         VirtualInputManager:SendMouseButtonEvent(0, 0, 0, false, game, 1)
     end)
 end
+
+-- Отдельный луп для aimbot (каждый кадр — не сбивается)
+RunService.RenderStepped:Connect(function()
+    if not State.AimEnabled then return end
+
+    local isAiming = (not isMobile and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2))
+                   or (isMobile)
+                   or State.AutoShoot
+
+    if not isAiming then return end
+
+    local target = getClosest()
+    if not target then return end
+
+    aimAt(target)
+    if State.AutoShoot then tryAutoShoot(target) end
+end)
 
 -- ============================================================
 --  ИКОНКИ ПРЕДМЕТОВ
@@ -1341,20 +1426,6 @@ if hasDrawing then
                     FOVring.Radius = State.AimFOV
                     FOVring.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
                     FOVring.Color = Colors.Accent
-
-                    local isAiming = (not isMobile and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2))
-                                   or (isMobile and State.AutoShoot)
-                    if State.AutoShoot then isAiming = true end
-
-                    if isAiming then
-                        local tgt = getClosest()
-                        if tgt then
-                            Camera.CFrame = Camera.CFrame:Lerp(
-                                CFrame.new(Camera.CFrame.Position, tgt.Position),
-                                State.AimSmooth)
-                            if State.AutoShoot then tryAutoShoot(tgt) end
-                        end
-                    end
                 end
             end
 
@@ -1537,8 +1608,9 @@ end)
 --  HOTKEY
 -- ============================================================
 UserInputService.InputBegan:Connect(function(input, processed)
-    if processed then return end
-    if input.KeyCode == Enum.KeyCode.RightShift then toggleMenu() end
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        toggleMenu()
+    end
 end)
 
 -- ============================================================
@@ -1546,10 +1618,10 @@ end)
 -- ============================================================
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.6",
-        Text = "Pure Black • Wall X-Ray • RSHIFT",
+        Title = "NyzeRust v3.7",
+        Text = "Fixed Aimbot + Free Mouse • RSHIFT",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v3.6] Загружен. RSHIFT для открытия.")
+print("[NyzeRust v3.7] Загружен. RSHIFT для открытия.")
