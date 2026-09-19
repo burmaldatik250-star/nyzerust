@@ -1,6 +1,7 @@
 --[[
-    NyzeRust v3.9 — Premium macOS Edition
-    Premium dark UI • 4 themes • Fixed tabs • First-person aimbot
+    NyzeRust v4.0 — Premium macOS Edition
+    Auto Aimbot (always active while enabled) • 4 Themes
+    Fixed tabs • First-person aim • X-Ray • FPS Booster
 --]]
 
 -- ============================================================
@@ -28,7 +29,7 @@ local hasDrawing = pcall(function()
 end)
 
 -- ============================================================
---  ТЕМЫ (4 шт.)
+--  ТЕМЫ
 -- ============================================================
 local Themes = {
     Midnight = {
@@ -140,26 +141,16 @@ local function padding(parent, px, py)
 end
 
 -- ============================================================
---  РЕЕСТР ДЛЯ СМЕНЫ ТЕМЫ
+--  РЕЕСТР ДЛЯ ТЕМ
 -- ============================================================
-local Themed = {
-    frames = {},      -- {inst, kind} — kind: "bg" | "sidebar" | "panel"
-    labels = {},      -- {inst, kind} — kind: "text" | "dim" | "muted"
-    strokes = {},     -- {inst}
-    buttons = {},     -- {inst}
-    accents = {},     -- {inst}
-    fills = {},       -- fill слайдеров
-    knobs = {},       -- knob тоглов
-    markers = {},     -- полоски слева тогла
-}
-
+local Themed = { frames={}, labels={}, strokes={}, buttons={}, accents={}, fills={}, knobs={}, markers={} }
 local function regFrame(inst, kind) table.insert(Themed.frames, {inst=inst, kind=kind or "panel"}) end
 local function regLabel(inst, kind) table.insert(Themed.labels, {inst=inst, kind=kind or "text"}) end
 local function regStroke(inst) table.insert(Themed.strokes, inst) end
 local function regAccent(inst) table.insert(Themed.accents, inst) end
 
 -- ============================================================
---  TOGGLE LOGIC
+--  TOGGLE
 -- ============================================================
 local function refreshToggleUI(prop, button, statusFrame)
     if not button or not statusFrame then return end
@@ -247,8 +238,7 @@ if isMobile then
 end
 corner(M, 14)
 local MainStroke = stroke(M, Colors.BorderLight, 1, 0.3)
-regFrame(M, "bg")
-regStroke(MainStroke)
+regFrame(M, "bg"); regStroke(MainStroke)
 
 local topGlow = new("Frame", {
     BackgroundColor3 = Colors.Accent, BackgroundTransparency = 0.7,
@@ -257,9 +247,7 @@ local topGlow = new("Frame", {
 }, M)
 regAccent(topGlow)
 
--- ============================================================
---  TITLE BAR
--- ============================================================
+-- TITLE BAR
 local TitleBar = new("Frame", {
     Size = UDim2.new(1, 0, 0, 44), Position = UDim2.new(0, 0, 0, 0),
     BackgroundColor3 = Colors.Sidebar, BorderSizePixel = 0, ZIndex = 2
@@ -269,23 +257,19 @@ local fixCorner = new("Frame", {
     Size = UDim2.new(1, 0, 0, 14), Position = UDim2.new(0, 0, 1, -14),
     BackgroundColor3 = Colors.Sidebar, BorderSizePixel = 0, ZIndex = 2
 }, TitleBar)
-regFrame(TitleBar, "sidebar")
-regFrame(fixCorner, "sidebar")
+regFrame(TitleBar, "sidebar"); regFrame(fixCorner, "sidebar")
 
 local tlContainer = new("Frame", {
-    Size = UDim2.new(0, 60, 0, 12),
-    Position = UDim2.new(0, 16, 0.5, -6),
+    Size = UDim2.new(0, 60, 0, 12), Position = UDim2.new(0, 16, 0.5, -6),
     BackgroundTransparency = 1, ZIndex = 3
 }, TitleBar)
-
 local function mkDot(color, order)
     local dot = new("Frame", {
         Size = UDim2.new(0, 12, 0, 12),
         Position = UDim2.new(0, (order - 1) * 18, 0, 0),
         BackgroundColor3 = color, BorderSizePixel = 0, ZIndex = 3
     }, tlContainer)
-    corner(dot, 6)
-    return dot
+    corner(dot, 6); return dot
 end
 local dotClose = mkDot(Color3.fromRGB(255, 95, 87), 1)
 mkDot(Color3.fromRGB(255, 189, 68), 2)
@@ -298,14 +282,12 @@ local closeClick = new("TextButton", {
 closeClick.MouseButton1Click:Connect(function() toggleMenu() end)
 
 local TitleLogo = new("TextLabel", {
-    Size = UDim2.new(0, 26, 0, 26),
-    Position = UDim2.new(0, 92, 0.5, -13),
+    Size = UDim2.new(0, 26, 0, 26), Position = UDim2.new(0, 92, 0.5, -13),
     BackgroundColor3 = Colors.Accent, Text = "N",
     TextColor3 = Color3.fromRGB(255, 255, 255), Font = Enum.Font.GothamBold,
     TextSize = 15, ZIndex = 3
 }, TitleBar)
-corner(TitleLogo, 8)
-regAccent(TitleLogo)
+corner(TitleLogo, 8); regAccent(TitleLogo)
 
 local Title = new("TextLabel", {
     Size = UDim2.new(1, -300, 1, 0), Position = UDim2.new(0, 126, 0, 0),
@@ -317,24 +299,20 @@ regLabel(Title, "text")
 
 local SubTitle = new("TextLabel", {
     Size = UDim2.new(0, 200, 1, 0), Position = UDim2.new(1, -290, 0, 0),
-    BackgroundTransparency = 1, Text = "v3.9  •  Premium",
+    BackgroundTransparency = 1, Text = "v4.0  •  Auto Aim",
     TextColor3 = Colors.TextMuted, Font = Enum.Font.Gotham,
     TextSize = 11, TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 3
 }, TitleBar)
 regLabel(SubTitle, "muted")
 
--- ============================================================
---  SIDEBAR
--- ============================================================
+-- SIDEBAR
 local Sidebar = new("Frame", {
     Size = UDim2.new(0, 168, 1, -60), Position = UDim2.new(0, 10, 0, 50),
     BackgroundColor3 = Colors.Sidebar, BorderSizePixel = 0, ZIndex = 2
 }, M)
 corner(Sidebar, 12)
 local SidebarStroke = stroke(Sidebar, Colors.Border, 1, 0.5)
-regFrame(Sidebar, "sidebar")
-regStroke(SidebarStroke)
-
+regFrame(Sidebar, "sidebar"); regStroke(SidebarStroke)
 new("UIListLayout", {Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder}, Sidebar)
 padding(Sidebar, 8, 10)
 
@@ -344,12 +322,9 @@ local sideHeader = new("TextLabel", {
     Font = Enum.Font.GothamMedium, TextSize = 10,
     TextXAlignment = Enum.TextXAlignment.Left, LayoutOrder = 0
 }, Sidebar)
-padding(sideHeader, 8, 0)
-regLabel(sideHeader, "muted")
+padding(sideHeader, 8, 0); regLabel(sideHeader, "muted")
 
--- ============================================================
---  CONTAINER
--- ============================================================
+-- CONTAINER
 local Container = new("ScrollingFrame", {
     Position = UDim2.new(0, 188, 0, 50), Size = UDim2.new(1, -198, 1, -60),
     BackgroundColor3 = Colors.Panel, BorderSizePixel = 0,
@@ -360,14 +335,12 @@ local Container = new("ScrollingFrame", {
 }, M)
 corner(Container, 12)
 local ContainerStroke = stroke(Container, Colors.Border, 1, 0.5)
-regFrame(Container, "panel")
-regStroke(ContainerStroke)
+regFrame(Container, "panel"); regStroke(ContainerStroke)
 padding(Container, 14)
-
 new("UIListLayout", {Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder}, Container)
 
 -- ============================================================
---  UI ФУНКЦИИ (СОЗДАНИЕ)
+--  UI ФУНКЦИИ
 -- ============================================================
 local function createCategory(title, order)
     local f = new("Frame", {
@@ -461,7 +434,7 @@ local function createSlider(label, prop, min, max, order)
     corner(f, 10)
     local fStroke = stroke(f, Colors.Border, 1, 0.5)
     regStroke(fStroke)
-    table.insert(Themed.buttons, {inst=f, prop=prop})
+    table.insert(Themed.buttons, {inst=f})
 
     local lbl = new("TextLabel", {
         Size = UDim2.new(1, -110, 0, 18), Position = UDim2.new(0, 18, 0, 10),
@@ -581,8 +554,10 @@ end
 -- ============================================================
 local Tabs = {VISUALS = {}, AIM = {}, PLAYER = {}, WORLD = {}, SETTINGS = {}}
 local tabButtons = {}
+local CurrentTabShown = "VISUALS"
 
 local function showTab(name)
+    CurrentTabShown = name
     for tN, objs in pairs(Tabs) do
         for _, o in ipairs(objs) do
             o.Visible = (tN == name)
@@ -591,7 +566,7 @@ local function showTab(name)
     for key, btn in pairs(tabButtons) do
         local active = (key == name)
         TweenService:Create(btn, TweenInfo.new(0.25, Enum.EasingStyle.Quart), {
-            BackgroundColor3 = active and Colors.CardHover or Colors.Sidebar,
+            BackgroundColor3 = active and Colors.CardHover or Colors.Sidebar
         }):Play()
         local lbl = btn:FindFirstChildOfClass("TextLabel")
         if lbl then
@@ -600,9 +575,7 @@ local function showTab(name)
             }):Play()
         end
         local bar = btn:FindFirstChild("ActiveBar")
-        if bar then
-            bar.BackgroundTransparency = active and 0 or 1
-        end
+        if bar then bar.BackgroundTransparency = active and 0 or 1 end
     end
 end
 
@@ -631,7 +604,6 @@ local function createTabBtn(name, label, order)
     regLabel(lbl, "dim")
 
     tabButtons[name] = b
-
     b.MouseButton1Click:Connect(function() showTab(name) end)
     b.MouseEnter:Connect(function()
         if lbl.TextColor3 ~= Colors.Accent then
@@ -646,12 +618,10 @@ local function createTabBtn(name, label, order)
 end
 
 -- ============================================================
---  НАПОЛНЕНИЕ — КАЖДЫЙ ЭЛЕМЕНТ СРАЗУ В СВОЮ ВКЛАДКУ
+--  НАПОЛНЕНИЕ
 -- ============================================================
 local O = 0
 local function nextO() O = O + 1; return O end
-
--- обёртки, которые добавляют объект в нужный Tabs после создания
 local function addTo(tabName, obj)
     if obj then
         table.insert(Tabs[tabName], obj)
@@ -659,14 +629,13 @@ local function addTo(tabName, obj)
     end
 end
 
--- Кнопки вкладок
 createTabBtn("VISUALS",  "ESP",       1)
 createTabBtn("AIM",      "Aimbot",    2)
 createTabBtn("PLAYER",   "Player",    3)
 createTabBtn("WORLD",    "World",     4)
 createTabBtn("SETTINGS", "Settings",  5)
 
--- ============ VISUALS ============
+-- VISUALS
 addTo("VISUALS", createCategory("ESP ИГРОКОВ", nextO()))
 addTo("VISUALS", createToggle("Рамки игроков",      "EspBoxes",   nextO()))
 addTo("VISUALS", createToggle("Ники",               "EspNames",   nextO()))
@@ -680,7 +649,7 @@ addTo("VISUALS", createToggle("Скелет",             "EspSkeleton",nextO())
 addTo("VISUALS", createToggle("Кружок головы",      "EspHead",    nextO()))
 addTo("VISUALS", createSlider("Макс. дистанция",    "PlayerEspMaxDist", 100, 5000, nextO()))
 
--- ============ AIM ============
+-- AIM
 addTo("AIM", createCategory("АИМБОТ", nextO()))
 addTo("AIM", createToggle("Включить Аимбот",    "AimEnabled",  nextO()))
 addTo("AIM", createToggle("Проверка команды",   "TeamCheck",   nextO()))
@@ -691,7 +660,7 @@ addTo("AIM", createSlider("Задержка выстрела",  "AutoShootDelay"
 addTo("AIM", createSlider("Плавность",          "AimSmooth",   0.01, 1, nextO()))
 addTo("AIM", createSlider("Радиус FOV",         "AimFOV",      20, 800, nextO()))
 
--- ============ PLAYER ============
+-- PLAYER
 addTo("PLAYER", createCategory("ИГРОК", nextO()))
 addTo("PLAYER", createToggle("Скорость",           "LegitSpeed",     nextO()))
 addTo("PLAYER", createSlider("Множитель скорости", "SpeedMultiplier", 1, 5, nextO()))
@@ -703,7 +672,7 @@ addTo("PLAYER", createCategory("КАМЕРА", nextO()))
 addTo("PLAYER", createToggle("Третье лицо",        "ThirdPerson",     nextO()))
 addTo("PLAYER", createSlider("Дистанция камеры",   "ThirdPersonDist", 3, 50, nextO()))
 
--- ============ WORLD ============
+-- WORLD
 addTo("WORLD", createCategory("ВИЗУАЛ", nextO()))
 addTo("WORLD", createToggle("X-Ray стен",         "XRay",       nextO()))
 addTo("WORLD", createToggle("Полное освещение",   "FullBright", nextO()))
@@ -733,7 +702,7 @@ addTo("WORLD", createToggle("Упростить террейн",      "OptLowTer
 addTo("WORLD", createToggle("Убрать звуки",           "OptNoSounds",     nextO()))
 addTo("WORLD", createSlider("Дальность прорисовки",   "OptRenderDist",   100, 5000, nextO()))
 
--- ============ SETTINGS ============
+-- SETTINGS
 addTo("SETTINGS", createCategory("ТЕМА ОФОРМЛЕНИЯ", nextO()))
 addTo("SETTINGS", createActionBtn("Midnight — тёмный с фиолетовым",  function() ApplyTheme("Midnight") end,   nextO()))
 addTo("SETTINGS", createActionBtn("Obsidian — глубокий чёрный",      function() ApplyTheme("Obsidian") end,   nextO()))
@@ -749,7 +718,6 @@ function ApplyTheme(themeName)
     Colors = th
     CurrentTheme = themeName
 
-    -- Фоны
     for _, item in ipairs(Themed.frames) do
         pcall(function()
             if item.kind == "bg" then item.inst.BackgroundColor3 = th.Background
@@ -758,8 +726,6 @@ function ApplyTheme(themeName)
             end
         end)
     end
-
-    -- Лейблы
     for _, item in ipairs(Themed.labels) do
         pcall(function()
             if item.kind == "text" then item.inst.TextColor3 = th.Text
@@ -768,83 +734,59 @@ function ApplyTheme(themeName)
             end
         end)
     end
-
-    -- Обводки
     for _, s in ipairs(Themed.strokes) do
         pcall(function() s.Color = th.Border end)
     end
-
-    -- Кнопки/карточки
     for _, item in ipairs(Themed.buttons) do
         pcall(function()
-            if item.prop and State[item.prop] then
-                item.inst.BackgroundColor3 = th.CardHover
-            else
-                item.inst.BackgroundColor3 = th.Card
-            end
+            if item.prop and State[item.prop] then item.inst.BackgroundColor3 = th.CardHover
+            else item.inst.BackgroundColor3 = th.Card end
         end)
     end
-
-    -- Акценты (полоски слева, логотип, topGlow, ActiveBar)
     for _, inst in ipairs(Themed.accents) do
         pcall(function() inst.BackgroundColor3 = th.Accent end)
     end
-
-    -- Fill слайдеров
     for _, f in ipairs(Themed.fills) do
         pcall(function() f.BackgroundColor3 = th.Accent end)
     end
-
-    -- Knob-ы тоглов (фон кружка)
     for _, item in ipairs(Themed.knobs) do
         pcall(function()
             item.inst.BackgroundColor3 = State[item.prop] and th.Accent or th.BorderLight
         end)
     end
-
-    -- Маркеры слева тогла
     for _, item in ipairs(Themed.markers) do
         pcall(function()
             item.inst.BackgroundColor3 = State[item.prop] and th.Accent or th.BorderLight
         end)
     end
-
-    -- TitleLogo всегда акцент
     pcall(function() TitleLogo.BackgroundColor3 = th.Accent end)
-
-    -- Watermark
     if _G.WFrame then
         pcall(function()
             _G.WFrame.BackgroundColor3 = th.Background
             _G.WStroke.Color = th.Accent
         end)
     end
-
-    showTab(CurrentTabShown or "VISUALS")
+    showTab(CurrentTabShown)
 end
 
 -- ============================================================
 --  TOGGLE MENU
 -- ============================================================
 local menuToggled = false
-local CurrentTabShown = "VISUALS"
-
-local function setMouseFree(free)
-    pcall(function()
-        if free then
-            UserInputService.MouseBehavior = Enum.MouseBehavior.Default
-            UserInputService.MouseIconEnabled = true
-        end
-    end)
-end
 
 function toggleMenu()
     menuToggled = not menuToggled
     if menuToggled then
         M.Visible = true
         if not isMobile then
-            if State.FreeMouse then setMouseFree(true)
-            else UserInputService.MouseIconEnabled = true end
+            if State.FreeMouse then
+                pcall(function()
+                    UserInputService.MouseBehavior = Enum.MouseBehavior.Default
+                    UserInputService.MouseIconEnabled = true
+                end)
+            else
+                UserInputService.MouseIconEnabled = true
+            end
         end
         TweenService:Create(Blur, TweenInfo.new(0.35), {Size = 14}):Play()
         local target = isMobile
@@ -867,7 +809,6 @@ function toggleMenu()
     end
 end
 
--- Свободная мышь
 RunService.RenderStepped:Connect(function()
     if menuToggled and State.FreeMouse and not isMobile then
         pcall(function()
@@ -886,9 +827,7 @@ UserInputService:GetPropertyChangedSignal("MouseBehavior"):Connect(function()
     end
 end)
 
--- ============================================================
---  МОБИЛЬНАЯ КНОПКА
--- ============================================================
+-- МОБИЛЬНАЯ КНОПКА
 if isMobile then
     local OpenBtn = new("TextButton", {
         Size = UDim2.new(0, 52, 0, 52), Position = UDim2.new(0, 12, 0.42, 0),
@@ -901,9 +840,7 @@ if isMobile then
     OpenBtn.MouseButton1Click:Connect(toggleMenu)
 end
 
--- ============================================================
---  WATERMARK
--- ============================================================
+-- WATERMARK
 local WM = Instance.new("ScreenGui")
 WM.Name = "NyzeRustWM"
 WM.ResetOnSpawn = false
@@ -950,11 +887,10 @@ local function makeSeg(text, color, order)
     l.Parent = WRow
     return l
 end
-
 local segFpsVal  = makeSeg("0", Colors.Accent, 5)
 local segPingVal = makeSeg("0ms", Colors.Accent, 8)
 makeSeg("NyzeRust", Colors.Text, 1)
-makeSeg("v3.9", Colors.TextMuted, 2)
+makeSeg("v4.0", Colors.TextMuted, 2)
 makeSeg("•", Colors.BorderLight, 3)
 makeSeg("FPS:", Colors.TextDim, 4)
 makeSeg("•", Colors.BorderLight, 6)
@@ -974,9 +910,7 @@ RunService.RenderStepped:Connect(function()
     end)
 end)
 
--- ============================================================
---  THIRD PERSON
--- ============================================================
+-- THIRD PERSON
 local thirdPersonActive = false
 local function applyThirdPerson()
     if State.ThirdPerson and not thirdPersonActive then
@@ -1003,9 +937,7 @@ task.spawn(function()
     while true do task.wait(0.2); pcall(applyThirdPerson) end
 end)
 
--- ============================================================
---  GAME LOGIC
--- ============================================================
+-- GAME LOGIC
 workspace.DescendantAdded:Connect(function(obj)
     if State.NoBulletDrop and obj:IsA("BasePart") and (obj.Name:find("Bullet") or obj.Name:find("Projectile")) then
         pcall(function()
@@ -1120,7 +1052,7 @@ local function tryUnlockRemote(lockObj)
                 local n = d.Name:lower()
                 if n:find("unlock") or n:find("code") or n:find("submit")
                 or n:find("enter") or n:find("open") or n:find("key") then
-                    local codes = {"0000", "1234", "1111", "9999", "2000", "7777", "12345", "00000"}
+                    local codes = {"0000","1234","1111","9999","2000","7777","12345","00000"}
                     for _, code in ipairs(codes) do
                         if d:IsA("RemoteEvent") then
                             pcall(function() d:FireServer(code) end)
@@ -1162,15 +1094,11 @@ end
 local function applyCrateVisuals(obj, name, color)
     if not obj:FindFirstChild("CrateHighlight") then
         local h = Instance.new("Highlight", obj)
-        h.Name = "CrateHighlight"
-        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        h.Name = "CrateHighlight"; h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     end
     if not obj:FindFirstChild("CrateTag") then
-        local bg = new("BillboardGui", {Name = "CrateTag", AlwaysOnTop = true,
-            Size = UDim2.new(0, 120, 0, 40), ExtentsOffset = Vector3.new(0, 2, 0)}, obj)
-        new("TextLabel", {Name = "Label", BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0), TextSize = 13, TextColor3 = Color3.new(1, 1, 1),
-            Font = Enum.Font.GothamBold, TextStrokeTransparency = 0}, bg)
+        local bg = new("BillboardGui", {Name="CrateTag",AlwaysOnTop=true,Size=UDim2.new(0,120,0,40),ExtentsOffset=Vector3.new(0,2,0)}, obj)
+        new("TextLabel", {Name="Label",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextSize=13,TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamBold,TextStrokeTransparency=0}, bg)
     end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if root then
@@ -1193,8 +1121,7 @@ local function updateNpcEsp()
         if npc:IsA("Model") then
             if not npc:FindFirstChild("NpcHighlight") then
                 local h = Instance.new("Highlight", npc)
-                h.Name = "NpcHighlight"
-                h.FillColor = Color3.fromRGB(255, 80, 80)
+                h.Name = "NpcHighlight"; h.FillColor = Color3.fromRGB(255,80,80)
                 h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
             end
             local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -1212,15 +1139,11 @@ end
 local function applyOreVisuals(obj, name, color)
     if not obj:FindFirstChild("OreHighlight") then
         local h = Instance.new("Highlight", obj)
-        h.Name = "OreHighlight"
-        h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+        h.Name = "OreHighlight"; h.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     end
     if not obj:FindFirstChild("OreTag") then
-        local bg = new("BillboardGui", {Name = "OreTag", AlwaysOnTop = true,
-            Size = UDim2.new(0, 100, 0, 40), ExtentsOffset = Vector3.new(0, 2, 0)}, obj)
-        new("TextLabel", {Name = "Label", BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 1, 0), TextSize = 13, TextColor3 = Color3.new(1, 1, 1),
-            Font = Enum.Font.GothamBold, TextStrokeTransparency = 0}, bg)
+        local bg = new("BillboardGui", {Name="OreTag",AlwaysOnTop=true,Size=UDim2.new(0,100,0,40),ExtentsOffset=Vector3.new(0,2,0)}, obj)
+        new("TextLabel", {Name="Label",BackgroundTransparency=1,Size=UDim2.new(1,0,1,0),TextSize=13,TextColor3=Color3.new(1,1,1),Font=Enum.Font.GothamBold,TextStrokeTransparency=0}, bg)
     end
     local root = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
     if root then
@@ -1237,7 +1160,7 @@ local function applyOreVisuals(obj, name, color)
 end
 
 -- ОПТИМИЗАЦИЯ
-local OptBackup = {effects = {}, particles = {}, decals = {}, shadows = {}, parts = {}, sounds = {}}
+local OptBackup = {effects={},particles={},decals={},shadows={},parts={},sounds={}}
 local function optRestoreAll()
     for e, v in pairs(OptBackup.effects) do pcall(function() if e and e.Parent then e.Enabled = v end end) end
     for p, v in pairs(OptBackup.particles) do pcall(function() if p and p.Parent then p.Enabled = v end end) end
@@ -1245,7 +1168,7 @@ local function optRestoreAll()
     for s, v in pairs(OptBackup.shadows) do pcall(function() if s and s.Parent then s.CastShadow = v end end) end
     for pt, v in pairs(OptBackup.parts) do pcall(function() if pt and pt.Parent then pt.Transparency = v end end) end
     for sd, v in pairs(OptBackup.sounds) do pcall(function() if sd and sd.Parent then sd.Volume = v end end) end
-    OptBackup = {effects = {}, particles = {}, decals = {}, shadows = {}, parts = {}, sounds = {}}
+    OptBackup = {effects={},particles={},decals={},shadows={},parts={},sounds={}}
 end
 local function optApplyEffects()
     for _, e in ipairs(Lighting:GetChildren()) do
@@ -1331,8 +1254,7 @@ task.spawn(function()
         task.wait(2)
         pcall(function()
             if State.OptNoEffects or State.OptNoParticles or State.OptNoDecals
-            or State.OptNoShadows or State.OptFarParts or State.OptNoSounds
-            or State.OptLowGFX then
+            or State.OptNoShadows or State.OptFarParts or State.OptNoSounds or State.OptLowGFX then
                 applyOptimizations()
             end
         end)
@@ -1361,9 +1283,9 @@ RunService.RenderStepped:Connect(function()
                 local en = (ore.Name == "sulfur" and State.SulfurEsp)
                         or (ore.Name == "iron" and State.IronEsp)
                         or (ore.Name == "stone" and State.StoneEsp)
-                local col = (ore.Name == "sulfur" and Color3.new(1, 1, 0))
-                         or (ore.Name == "iron" and Color3.fromRGB(180, 180, 180))
-                         or Color3.fromRGB(220, 220, 220)
+                local col = (ore.Name == "sulfur" and Color3.new(1,1,0))
+                         or (ore.Name == "iron" and Color3.fromRGB(180,180,180))
+                         or Color3.fromRGB(220,220,220)
                 if en then applyOreVisuals(ore, ore.Name, col)
                 elseif ore:FindFirstChild("OreTag") then
                     ore.OreTag.Enabled, ore.OreHighlight.Enabled = false, false
@@ -1374,11 +1296,11 @@ RunService.RenderStepped:Connect(function()
         local crates = workspace:FindFirstChild("Crates")
         if crates then
             for _, crate in ipairs(crates:GetChildren()) do
-                local en, col = false, Color3.new(1, 1, 1)
-                if crate.Name == "Crate" then en = State.CrateEsp; col = Color3.fromRGB(180, 130, 60)
-                elseif crate.Name == "MilitaryCrate" then en = State.CrateEsp; col = Color3.fromRGB(0, 180, 0)
-                elseif crate.Name == "EliteCrate" then en = State.CrateEsp; col = Color3.fromRGB(255, 60, 90)
-                elseif crate.Name == "FoodBox" or crate.Name == "ToolBox" then en = State.CrateEsp; col = Color3.fromRGB(0, 200, 255)
+                local en, col = false, Color3.new(1,1,1)
+                if crate.Name == "Crate" then en = State.CrateEsp; col = Color3.fromRGB(180,130,60)
+                elseif crate.Name == "MilitaryCrate" then en = State.CrateEsp; col = Color3.fromRGB(0,180,0)
+                elseif crate.Name == "EliteCrate" then en = State.CrateEsp; col = Color3.fromRGB(255,60,90)
+                elseif crate.Name == "FoodBox" or crate.Name == "ToolBox" then en = State.CrateEsp; col = Color3.fromRGB(0,200,255)
                 end
                 if en then applyCrateVisuals(crate, crate.Name, col)
                 elseif crate:FindFirstChild("CrateTag") then
@@ -1388,8 +1310,8 @@ RunService.RenderStepped:Connect(function()
         end
 
         if State.FullBright then
-            Lighting.Ambient = Color3.new(1, 1, 1)
-            Lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+            Lighting.Ambient = Color3.new(1,1,1)
+            Lighting.OutdoorAmbient = Color3.new(1,1,1)
             Lighting.Brightness = 2
             Lighting.ClockTime = 14
         end
@@ -1397,7 +1319,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ============================================================
---  AIMBOT (фикс для первого лица)
+--  AIMBOT (АВТОМАТИЧЕСКИЙ)
 -- ============================================================
 local function getClosest()
     local center = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
@@ -1424,17 +1346,14 @@ local function getClosest()
     return target
 end
 
--- Жёсткая наводка в голову + тело (фикс 1-го лица)
 local function aimAt(targetPart)
     if not targetPart then return end
     local aimPos = targetPart.Position
     local alpha = 1 - State.AimSmooth
 
-    -- 1. Камера
     local newCFrame = CFrame.new(Camera.CFrame.Position, aimPos)
     Camera.CFrame = Camera.CFrame:Lerp(newCFrame, alpha)
 
-    -- 2. Humanoid (фикс первого лица)
     local char = LocalPlayer.Character
     if char then
         local hum = char:FindFirstChildOfClass("Humanoid")
@@ -1473,13 +1392,20 @@ local function tryAutoShoot(target)
     end)
 end
 
+-- АВТОМАТИЧЕСКИЙ ЛУП АИМА
 RunService.RenderStepped:Connect(function()
-    if not State.AimEnabled then restoreAutoRotate(); return end
-    local isAiming = (not isMobile and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2))
-                   or (isMobile) or State.AutoShoot
-    if not isAiming then restoreAutoRotate(); return end
+    if not State.AimEnabled then
+        restoreAutoRotate()
+        return
+    end
+
+    -- Aimbot работает ВСЕГДА пока toggle ON — без нажатия клавиш
     local target = getClosest()
-    if not target then restoreAutoRotate(); return end
+    if not target then
+        restoreAutoRotate()
+        return
+    end
+
     aimAt(target)
     if State.AutoShoot then tryAutoShoot(target) end
 end)
@@ -1534,7 +1460,7 @@ local function getPlayerInventoryItems(p)
     return items
 end
 
--- ESP
+-- ESP (Drawing)
 local espElements = {}
 local FOVring = nil
 if hasDrawing then
@@ -1553,7 +1479,7 @@ if hasDrawing then
         end)
         if not ok or not d then return end
         for _, l in ipairs(d.box) do l.Thickness, l.Color, l.Visible = 1, Colors.Accent, false end
-        d.hpBg.Thickness, d.hpBg.Color, d.hpBg.Visible = 3, Color3.new(0, 0, 0), false
+        d.hpBg.Thickness, d.hpBg.Color, d.hpBg.Visible = 3, Color3.new(0,0,0), false
         d.hpFill.Thickness, d.hpFill.Visible = 3, false
         d.hpText.Size, d.hpText.Center, d.hpText.Outline = 12, true, true
         d.hpText.Font, d.hpText.Color = 2, Colors.Text
@@ -1567,7 +1493,7 @@ if hasDrawing then
         d.head.Thickness, d.head.NumSides, d.head.Filled, d.head.Transparency = 2, 24, false, 1
         for _, b in ipairs({d.bone1,d.bone2,d.bone3,d.bone4}) do b.Thickness, b.Color = 1, Colors.Accent end
         for _, ic in ipairs({d.icon1,d.icon2,d.icon3,d.icon4,d.icon5,d.icon6}) do
-            ic.Visible = false; ic.Size = Vector2.new(20, 20); ic.Transparency = 1; ic.Rounding = 3
+            ic.Visible = false; ic.Size = Vector2.new(20,20); ic.Transparency = 1; ic.Rounding = 3
         end
         espElements[p] = d
     end
@@ -1748,10 +1674,10 @@ showTab("VISUALS")
 
 pcall(function()
     StarterGui:SetCore("SendNotification", {
-        Title = "NyzeRust v3.9",
-        Text = "Premium • RSHIFT",
+        Title = "NyzeRust v4.0",
+        Text = "Auto Aimbot • RSHIFT",
         Duration = 4
     })
 end)
 
-print("[NyzeRust v3.9] Загружен. RSHIFT для открытия.")
+print("[NyzeRust v4.0] Загружен. RSHIFT для открытия.")
